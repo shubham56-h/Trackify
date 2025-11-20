@@ -1,0 +1,199 @@
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import db, UserSplitAssignment, WorkoutSession, WorkoutSet, SplitDay
+from datetime import datetime, date
+
+today_bp = Blueprint("today", __name__, url_prefix='/api/today')
+
+
+@today_bp.route("", methods=["GET"])
+@jwt_required()
+def get_today():
+    """Step 3: Today screen - Shows today's workout"""
+    user_id = int(get_jwt_identity())
+    
+    assignment = UserSplitAssignment.query.filter_by(user_id=user_id).first()
+    if not assignment:
+        return jsonify({"message": "No split assigned. Create a split first."}), 404
+    
+    split = assignment.split
+    if not split.days:
+        return jsonify({"message": "Split has no days configured"}), 400
+    
+    # Get current day based on position
+    current_day = None
+    for day in split.days:
+        if day.position == assignment.current_position:
+            current_day = day
+            break
+    
+    if not current_day:
+        current_day = split.days[0]
+        assignment.current_position = 0
+        db.session.commit()
+    
+    # Check if there's an active session
+    active_session = WorkoutSession.query.filter_by(
+        user_id=user_id,
+        completed=False
+    ).first()
+    
+    return jsonify({
+        "today": {
+            "day_name": current_day.name,
+            "muscle_groups": current_day.muscle_groups,
+            "split_day_id": current_day.id
+        },
+        "active_session": {
+            "id": active_session.id,
+            "started_at": active_session.started_at.isoformat()
+        } if active_session else None
+    }), 200
+
+
+@today_bp.route("/start", methods=["POST"])
+@jwt_required()
+def start_workout():
+    """Step 3: Start Workout"""
+    user_id = int(get_jwt_identity())
+    
+    assignment = UserSplitAssignment.query.filter_by(user_id=user_id).first()
+    if not assignment:
+        return jsonify({"message": "No split assigned"}), 404
+    
+    # Check if already has active session
+    active_session = WorkoutSession.query.filter_by(
+        user_id=user_id,
+        completed=False
+    ).first()
+    
+    if active_session:
+        return jsonify({
+            "message": "Workout already in progress",
+            "session_id": active_session.id
+        }), 200
+    
+    # Get current day
+    split = assignment.split
+    current_day = None
+    for day in split.days:
+        if day.position == assignment.current_position:
+            current_day = day
+            break
+    
+    if not current_day:
+        return jsonify({"message": "Invalid split configuration"}), 400
+    
+    # Create new session
+    session = WorkoutSession(
+        user_id=user_id,
+        assignment_id=assignment.id,
+        split_day_id=current_day.id,
+        started_at=datetime.utcnow(),
+        completed=False
+    )
+    db.session.add(session)
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Workout started",
+        "session_id": session.id,
+        "day_name": current_day.name
+    }), 201
+
+
+@today_bp.route("/add-set", methods=["POST"])
+@jwt_required()
+def add_set():
+    """Step 4: During workout - Add sets"""
+    user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+    
+    exercise_name = data.get("exercise_name")
+    reps = data.get("reps")
+    weight = data.get("weight")
+    
+    if not exercise_name or reps is None or weight is None:
+        return jsonify({"message": "exercise_name, reps, and weight required"}), 400
+    
+    # Get active session
+    session = WorkoutSession.query.filter_by(
+        user_id=user_id,
+        completed=False
+    ).first()
+    
+    if not session:
+        return jsonify({"message": "No active workout session. Start a workout first."}), 404
+    
+    # Count existing sets for this exercise in this session
+    set_count = WorkoutSet.query.filter_by(
+        session_id=session.id,
+        exercise_name=exercise_name
+    ).count()
+    
+    workout_set = WorkoutSet(
+        session_id=session.id,
+        exercise_name=exercise_name,
+        set_number=set_count + 1,
+        reps=int(reps),
+        weight=float(weight)
+    )
+    db.session.add(workout_set)
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Set added",
+        "set": {
+            "id": workout_set.id,
+            "exercise_name": workout_set.exercise_name,
+            "set_number": workout_set.set_number,
+            "reps": workout_set.reps,
+            "weight": workout_set.weight
+        }
+    }), 201
+
+
+@today_bp.route("/finish", methods=["POST"])
+@jwt_required()
+def finish_workout():
+    """Step 5: Finish workout - Mark as completed and move to next day"""
+    user_id = int(get_jwt_identity())
+    
+    # Get active session
+    session = WorkoutSession.query.filter_by(
+        user_id=user_id,
+        completed=False
+    ).first()
+    
+    if not session:
+        return jsonify({"message": "No active workout session"}), 404
+    
+    # Mark session as completed
+    session.completed = True
+    session.ended_at = datetime.utcnow()
+    
+    # Update assignment
+    assignment = session.assignment
+    assignment.last_completed_at = date.today()
+    
+    # Move to next day
+    split = assignment.split
+    total_days = len(split.days)
+    assignment.current_position = (assignment.current_position + 1) % total_days
+    
+    db.session.commit()
+    
+    # Get next day info
+    next_day = None
+    for day in split.days:
+        if day.position == assignment.current_position:
+            next_day = day
+            break
+    
+    return jsonify({
+        "message": "Workout completed!",
+        "next_day": {
+            "name": next_day.name if next_day else "Unknown",
+            "muscle_groups": next_day.muscle_groups if next_day else None
+        }
+    }), 200

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Progress - Trackify{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <h1 class="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8">Progress Dashboard</h1>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm sm:text-base text-slate-400">Total Workouts</span>
+                <span class="text-2xl sm:text-3xl">🏋️</span>
+            </div>
+            <div class="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" id="totalWorkouts">0</div>
+        </div>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm sm:text-base text-slate-400">Total Sets</span>
+                <span class="text-2xl sm:text-3xl">💪</span>
+            </div>
+            <div class="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" id="totalSets">0</div>
+        </div>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm sm:text-base text-slate-400">Current Streak</span>
+                <span class="text-2xl sm:text-3xl">🔥</span>
+            </div>
+            <div class="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" id="currentStreak">0</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+            <h3 class="text-lg sm:text-xl font-bold mb-4">Volume Over Time</h3>
+            <canvas id="volumeChart"></canvas>
+        </div>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+            <h3 class="text-lg sm:text-xl font-bold mb-4">💪 Best Lifts</h3>
+            <div id="bestLiftsList" class="space-y-3 max-h-80 sm:max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadProgress() {
+        // Load stats
+        try {
+            const stats = await apiCall('/progress/stats');
+            document.getElementById('totalWorkouts').textContent = stats.total_workouts;
+            document.getElementById('totalSets').textContent = stats.total_sets;
+            document.getElementById('currentStreak').textContent = stats.current_streak;
+        } catch (error) {
+            console.error('Failed to load stats:', error);
+        }
+
+        // Load volume chart
+        try {
+            const volumeData = await apiCall('/progress/volume');
+            renderVolumeChart(volumeData.volume);
+        } catch (error) {
+            console.error('Failed to load volume data:', error);
+        }
+
+        // Load best lifts
+        try {
+            const bestLifts = await apiCall('/progress/best-lifts');
+            renderBestLifts(bestLifts.best_lifts);
+        } catch (error) {
+            console.error('Failed to load best lifts:', error);
+        }
+    }
+
+    function renderVolumeChart(data) {
+        const ctx = document.getElementById('volumeChart');
+        
+        if (data.length === 0) {
+            ctx.parentElement.innerHTML = '<p class="text-slate-400 text-center py-8">No workout data yet</p>';
+            return;
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.date),
+                datasets: [{
+                    label: 'Total Volume (kg)',
+                    data: data.map(d => d.volume),
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderBestLifts(lifts) {
+        const listDiv = document.getElementById('bestLiftsList');
+        
+        if (lifts.length === 0) {
+            listDiv.innerHTML = '<p class="text-slate-400 text-center py-8">No lifts recorded yet</p>';
+            return;
+        }
+
+        listDiv.innerHTML = lifts.map(lift => `
+            <div class="bg-slate-900 rounded-lg p-3 sm:p-4 border border-slate-700">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-sm sm:text-base lg:text-lg truncate">${lift.exercise}</p>
+                        <p class="text-slate-400 text-xs sm:text-sm">Best: ${lift.max_weight} kg × ${lift.max_reps} reps</p>
+                    </div>
+                    <div class="text-xl sm:text-2xl ml-2">🏆</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    loadProgress();
+</script>
+{% endblock %}

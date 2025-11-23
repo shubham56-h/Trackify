@@ -1,0 +1,81 @@
+{% extends "base_public.html" %}
+
+{% block title %}Trackify - Track Your Fitness Journey{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="container mx-auto px-4 sm:px-6 py-12 sm:py-20">
+    <div class="text-center max-w-4xl mx-auto">
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
+            Track Your Workouts,<br>
+            <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Achieve Your Goals
+            </span>
+        </h1>
+        <p class="text-base sm:text-lg lg:text-xl text-slate-300 mb-8 sm:mb-12 px-4">
+            The ultimate workout tracking app for serious lifters. Create custom splits, 
+            track your progress, and watch your strength grow.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
+            <a href="/signup" class="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary to-secondary rounded-lg text-base sm:text-lg font-semibold hover:opacity-90 transition transform hover:scale-105">
+                Get Started Free
+            </a>
+            <a href="/login" class="px-6 sm:px-8 py-3 sm:py-4 bg-slate-700 rounded-lg text-base sm:text-lg font-semibold hover:bg-slate-600 transition">
+                Login
+            </a>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mt-16 sm:mt-24">
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 sm:p-8 border border-slate-700 hover:border-primary transition">
+            <div class="text-4xl sm:text-5xl mb-4">📊</div>
+            <h3 class="text-xl sm:text-2xl font-bold mb-3">Track Progress</h3>
+            <p class="text-sm sm:text-base text-slate-300">
+                Monitor your lifts, volume, and personal records. Visualize your progress with beautiful charts.
+            </p>
+        </div>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 sm:p-8 border border-slate-700 hover:border-secondary transition">
+            <div class="text-4xl sm:text-5xl mb-4">🗓️</div>
+            <h3 class="text-xl sm:text-2xl font-bold mb-3">Custom Splits</h3>
+            <p class="text-sm sm:text-base text-slate-300">
+                Create personalized workout splits. Push/Pull/Legs, Upper/Lower, or your own custom routine.
+            </p>
+        </div>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 sm:p-8 border border-slate-700 hover:border-primary transition">
+            <div class="text-4xl sm:text-5xl mb-4">🔥</div>
+            <h3 class="text-xl sm:text-2xl font-bold mb-3">Build Streaks</h3>
+            <p class="text-sm sm:text-base text-slate-300">
+                Stay consistent with workout streaks. Track your dedication and never miss a session.
+            </p>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="mt-16 sm:mt-24">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-12">How It Works</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            <div class="text-center">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-lg sm:text-2xl font-bold mx-auto mb-3 sm:mb-4">1</div>
+                <h4 class="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Create Account</h4>
+                <p class="text-slate-400 text-xs sm:text-sm">Sign up in seconds</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-lg sm:text-2xl font-bold mx-auto mb-3 sm:mb-4">2</div>
+                <h4 class="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Setup Split</h4>
+                <p class="text-slate-400 text-xs sm:text-sm">Design your routine</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-lg sm:text-2xl font-bold mx-auto mb-3 sm:mb-4">3</div>
+                <h4 class="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Start Workout</h4>
+                <p class="text-slate-400 text-xs sm:text-sm">Track every set</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-lg sm:text-2xl font-bold mx-auto mb-3 sm:mb-4">4</div>
+                <h4 class="text-sm sm:text-base font-semibold mb-1 sm:mb-2">See Progress</h4>
+                <p class="text-slate-400 text-xs sm:text-sm">Watch gains grow</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

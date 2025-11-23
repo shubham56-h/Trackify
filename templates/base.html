@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Trackify{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ensure backdrop-filter works */
+        @supports (backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0)) {
+            .backdrop-blur-lg {
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+            }
+        }
+        
+        /* Smooth dropdown animation */
+        [x-cloak] { display: none !important; }
+        
+        .dropdown-menu {
+            transform-origin: top right;
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-white">
+    <!-- Navigation -->
+    <nav class="bg-slate-800/50 backdrop-blur-lg border-b border-slate-700 sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 py-4">
+            <div class="flex justify-between items-center">
+                <a href="/dashboard" class="flex items-center space-x-3">
+                    <!-- Logo SVG -->
+                    <svg class="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Barbell -->
+                        <line x1="10" y1="25" x2="90" y2="25" stroke="#10b981" stroke-width="5" stroke-linecap="round"/>
+                        <!-- Left weight plate -->
+                        <rect x="8" y="20" width="8" height="10" rx="1" fill="#10b981"/>
+                        <!-- Right weight plate -->
+                        <rect x="84" y="20" width="8" height="10" rx="1" fill="#10b981"/>
+                        <!-- Head -->
+                        <circle cx="50" cy="40" r="8" fill="#6366f1"/>
+                        <!-- Body -->
+                        <line x1="50" y1="48" x2="50" y2="70" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                        <!-- Left arm (holding barbell) -->
+                        <line x1="50" y1="52" x2="30" y2="25" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                        <!-- Right arm (holding barbell) -->
+                        <line x1="50" y1="52" x2="70" y2="25" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                        <!-- Left leg -->
+                        <line x1="50" y1="70" x2="42" y2="90" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                        <!-- Right leg -->
+                        <line x1="50" y1="70" x2="58" y2="90" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                    <span class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        Trackify
+                    </span>
+                </a>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Streak Button -->
+                    <button onclick="toggleStreakModal()" 
+                        class="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition group">
+                        <span class="text-xl">🔥</span>
+                        <span class="font-bold text-white" id="navStreak">0</span>
+                    </button>
+                    
+                    <!-- Hamburger Menu -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" 
+                            class="p-2 text-slate-300 hover:text-white transition-all duration-200 hover:bg-slate-700/50 rounded-lg">
+                            <svg class="w-6 h-6 transition-transform duration-200" 
+                                 :class="{ 'rotate-90': open }"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                        <div x-show="open" 
+                             x-cloak
+                             @click.away="open = false"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 transform scale-95 -translate-y-2"
+                             x-transition:enter-end="opacity-100 transform scale-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 transform scale-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 transform scale-95 -translate-y-2"
+                             class="absolute right-0 mt-2 w-56 bg-slate-800/95 backdrop-blur-lg border border-slate-600 rounded-lg shadow-2xl overflow-hidden">
+                            <div class="py-2">
+                                <div class="px-4 py-3 border-b border-slate-700 bg-slate-900/50">
+                                    <p class="text-xs text-slate-400 mb-1">Signed in as</p>
+                                    <p class="text-sm font-medium text-white truncate" id="userEmail">Loading...</p>
+                                </div>
+                                <a href="/dashboard" class="flex items-center px-4 py-3 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-150">
+                                    <span class="mr-3 text-lg">🏠</span> Dashboard
+                                </a>
+                                <a href="/splits" class="flex items-center px-4 py-3 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-150">
+                                    <span class="mr-3 text-lg">🗓️</span> Splits
+                                </a>
+                                <a href="/progress" class="flex items-center px-4 py-3 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-150">
+                                    <span class="mr-3 text-lg">📊</span> Progress
+                                </a>
+                                <div class="border-t border-slate-700 my-2"></div>
+                                <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150">
+                                    <span class="mr-3 text-lg">🚪</span> Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[60] space-y-2"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[55] hidden flex items-center justify-center p-4" onclick="closeConfirmModal(event)">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-full border border-slate-700 shadow-2xl transform transition-all" onclick="event.stopPropagation()">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold mb-2" id="confirmTitle">Confirm Action</h3>
+                    <p class="text-slate-300 text-sm" id="confirmMessage">Are you sure?</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="confirmModalReject()" class="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold transition">
+                    Cancel
+                </button>
+                <button onclick="confirmModalResolve()" class="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary hover:opacity-90 rounded-lg font-semibold transition">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Streak Calendar Modal -->
+    <div id="streakModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="closeStreakModal(event)">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-2xl w-full border border-slate-700 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Workout Streak 🔥</h2>
+                <button onclick="toggleStreakModal()" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-900 rounded-lg p-4 text-center">
+                    <p class="text-sm text-slate-400 mb-1">Current Streak</p>
+                    <p class="text-3xl font-bold text-primary" id="modalCurrentStreak">0</p>
+                </div>
+                <div class="bg-slate-900 rounded-lg p-4 text-center">
+                    <p class="text-sm text-slate-400 mb-1">Longest Streak</p>
+                    <p class="text-3xl font-bold text-secondary" id="modalLongestStreak">0</p>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-sm text-slate-400 mb-3">Last 30 days</p>
+                <div id="streakCalendar" class="grid grid-cols-10 gap-1.5"></div>
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs text-slate-400">
+                <span>Less</span>
+                <div class="flex gap-1">
+                    <div class="w-3 h-3 sm:w-4 sm:h-4 bg-slate-700 rounded-sm"></div>
+                    <div class="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-sm"></div>
+                </div>
+                <span>More</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    {% block content %}{% endblock %}
+
+    <!-- Footer -->
+    <footer class="bg-slate-800/50 border-t border-slate-700 mt-16 sm:mt-24 py-6 sm:py-8">
+        <div class="container mx-auto px-4 sm:px-6 text-center text-slate-400 text-sm sm:text-base">
+            <p>&copy; 2025 Trackify. Built for lifters, by lifters. 💪</p>
+        </div>
+    </footer>
+
+    <!-- Base Scripts -->
+    <script>
+        const API_BASE = '/api';
+        const authToken = localStorage.getItem('authToken');
+
+        if (!authToken) {
+            window.location.href = '/login';
+        }
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+            if (body) options.body = JSON.stringify(body);
+            
+            const response = await fetch(API_BASE + endpoint, options);
+            if (response.status === 401) {
+                localStorage.removeItem('authToken');
+                window.location.href = '/login';
+                return;
+            }
+            return await response.json();
+        }
+
+        // Get user email from JWT token
+        function getUserEmail() {
+            if (!authToken) return 'user@email.com';
+            try {
+                const payload = JSON.parse(atob(authToken.split('.')[1]));
+                return payload.email || 'user@email.com';
+            } catch {
+                return 'user@email.com';
+            }
+        }
+
+        // Load navbar data
+        async function loadNavbar() {
+            // Set user email
+            const email = getUserEmail();
+            document.getElementById('userEmail').textContent = email;
+
+            // Load streak
+            try {
+                const stats = await apiCall('/progress/stats');
+                const streak = stats.current_streak || 0;
+                
+                document.getElementById('navStreak').textContent = streak;
+                document.getElementById('modalCurrentStreak').textContent = streak;
+                document.getElementById('modalLongestStreak').textContent = stats.longest_streak || 0;
+                
+                generateStreakCalendar(stats.workout_dates || []);
+            } catch (error) {
+                console.error('Failed to load navbar stats:', error);
+            }
+        }
+
+        function toggleStreakModal() {
+            const modal = document.getElementById('streakModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function closeStreakModal(event) {
+            if (event.target.id === 'streakModal') {
+                toggleStreakModal();
+            }
+        }
+
+        function generateStreakCalendar(workoutDates) {
+            const calendar = document.getElementById('streakCalendar');
+            const today = new Date();
+            const daysToShow = 30;
+            
+            const workoutSet = new Set(workoutDates.map(d => d.split('T')[0]));
+            
+            let html = '';
+            for (let i = daysToShow - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                
+                const hasWorkout = workoutSet.has(dateStr);
+                const isToday = i === 0;
+                
+                let bgColor = 'bg-slate-700';
+                if (hasWorkout) {
+                    bgColor = 'bg-green-500';
+                } else if (isToday) {
+                    bgColor = 'bg-slate-600 border border-primary';
+                }
+                
+                html += `
+                    <div class="relative group">
+                        <div class="${bgColor} w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition hover:scale-125" 
+                             title="${dateStr}${hasWorkout ? ' - Workout completed' : ''}">
+                        </div>
+                    </div>
+                `;
+            }
+            
+            calendar.innerHTML = html;
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/';
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const icons = {
+                success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+            
+            const colors = {
+                success: 'bg-green-500/20 border-green-500 text-green-500',
+                error: 'bg-red-500/20 border-red-500 text-red-500',
+                warning: 'bg-yellow-500/20 border-yellow-500 text-yellow-500',
+                info: 'bg-blue-500/20 border-blue-500 text-blue-500'
+            };
+            
+            toast.className = `${colors[type]} border backdrop-blur-lg rounded-lg p-4 shadow-lg transform transition-all duration-300 flex items-center gap-3 min-w-[300px] max-w-md`;
+            toast.style.animation = 'slideInRight 0.3s ease-out';
+            toast.innerHTML = `
+                <div class="flex-shrink-0">${icons[type]}</div>
+                <p class="flex-1 text-white font-medium text-sm">${message}</p>
+                <button onclick="this.parentElement.remove()" class="flex-shrink-0 text-white/70 hover:text-white transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Confirmation Modal System
+        let confirmResolve, confirmReject;
+        
+        function showConfirm(message, title = 'Confirm Action') {
+            return new Promise((resolve, reject) => {
+                confirmResolve = resolve;
+                confirmReject = reject;
+                
+                document.getElementById('confirmTitle').textContent = title;
+                document.getElementById('confirmMessage').textContent = message;
+                document.getElementById('confirmModal').classList.remove('hidden');
+            });
+        }
+        
+        function confirmModalResolve() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            if (confirmResolve) confirmResolve(true);
+        }
+        
+        function confirmModalReject() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            if (confirmReject) confirmReject(false);
+        }
+        
+        function closeConfirmModal(event) {
+            if (event.target.id === 'confirmModal') {
+                confirmModalReject();
+            }
+        }
+
+        // Initialize navbar
+        loadNavbar();
+    </script>
+    
+    <style>
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

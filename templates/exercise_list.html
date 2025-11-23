@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Exercises - Trackify{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold mb-2" id="pageTitle">Select Exercise</h1>
+            <p class="text-slate-400" id="pageSubtitle"></p>
+        </div>
+        <button onclick="goBack()" class="text-slate-300 hover:text-white transition text-sm">
+            ← Back
+        </button>
+    </div>
+
+    <!-- Add Custom Exercise -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700 mb-6">
+        <h3 class="text-lg font-bold mb-4">Add Custom Exercise</h3>
+        <form id="addExerciseForm" class="flex flex-col sm:flex-row gap-3">
+            <input type="text" id="exerciseName" placeholder="Exercise name" required
+                class="flex-1 px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition">
+            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition">
+                Add Exercise
+            </button>
+        </form>
+    </div>
+
+    <!-- Exercise List -->
+    <div class="space-y-3" id="exerciseList"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const muscleGroup = localStorage.getItem('selectedMuscleGroup');
+    const specificMuscle = localStorage.getItem('selectedSpecificMuscle');
+
+    if (!muscleGroup || !specificMuscle) {
+        window.location.href = '/workout-session';
+    }
+
+    async function loadExercises() {
+        document.getElementById('pageTitle').textContent = 
+            specificMuscle.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + ' Exercises';
+        document.getElementById('pageSubtitle').textContent = 
+            muscleGroup.charAt(0).toUpperCase() + muscleGroup.slice(1);
+
+        try {
+            const data = await apiCall(`/exercises/${muscleGroup}/${specificMuscle}`);
+            renderExercises(data.exercises);
+        } catch (error) {
+            console.error('Failed to load exercises:', error);
+        }
+    }
+
+    function renderExercises(exercises) {
+        const container = document.getElementById('exerciseList');
+        
+        if (exercises.length === 0) {
+            container.innerHTML = '<p class="text-slate-400 text-center py-8">No exercises found. Add a custom one above!</p>';
+            return;
+        }
+
+        container.innerHTML = exercises.map(exercise => `
+            <button onclick="selectExercise('${exercise.name}')" 
+                class="w-full bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-5 border border-slate-700 hover:border-primary transition group cursor-pointer text-left">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        <div class="text-2xl">${exercise.is_default ? '⭐' : '✏️'}</div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-lg font-semibold group-hover:text-primary transition truncate">${exercise.name}</h3>
+                            <p class="text-xs text-slate-400">${exercise.is_default ? 'Default' : 'Custom'}</p>
+                        </div>
+                    </div>
+                    <svg class="w-6 h-6 text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </button>
+        `).join('');
+    }
+
+    document.getElementById('addExerciseForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('exerciseName').value.trim();
+        
+        try {
+            await apiCall('/exercises', 'POST', {
+                name,
+                muscle_group: muscleGroup,
+                specific_muscle: specificMuscle
+            });
+            document.getElementById('exerciseName').value = '';
+            showToast('Exercise added successfully!', 'success');
+            loadExercises();
+        } catch (error) {
+            showToast('Failed to add exercise', 'error');
+        }
+    });
+
+    function selectExercise(exerciseName) {
+        localStorage.setItem('currentExercise', exerciseName);
+        window.location.href = '/exercise';
+    }
+
+    function goBack() {
+        window.location.href = '/muscle-selection';
+    }
+
+    loadExercises();
+</script>
+{% endblock %}

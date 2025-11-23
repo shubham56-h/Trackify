@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Trackify{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
+    <!-- Today's Workout Section -->
+    <div id="todaySection" class="hidden">
+        <!-- Main Workout Card -->
+        <div class="bg-gradient-to-br from-primary/20 via-slate-800/50 to-secondary/20 backdrop-blur-lg rounded-2xl p-8 sm:p-10 border-2 border-primary/30 mb-8 text-center shadow-xl shadow-primary/10">
+            <div class="mb-3">
+                <span class="inline-block px-4 py-1.5 bg-primary/20 text-primary text-xs font-semibold rounded-full border border-primary/30">
+                    TODAY'S WORKOUT
+                </span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent" id="todayDayName">
+                Loading...
+            </h2>
+            <p class="text-base sm:text-lg text-slate-300 font-medium mb-6" id="todayMuscles">Select a muscle group below</p>
+            <button onclick="startWorkout()" 
+                class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-secondary rounded-xl font-bold text-lg text-white hover:opacity-90 transition transform hover:scale-105 shadow-lg shadow-primary/20">
+                <span>Start Workout</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Motivational Quote Card -->
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 border border-slate-700 mb-6 relative overflow-hidden">
+            <div class="absolute top-0 left-0 text-6xl text-primary/10 font-serif">"</div>
+            <div class="relative z-10 pl-8">
+                <p class="text-lg sm:text-xl text-slate-200 italic mb-3 font-light" id="motivationalQuote">
+                    Loading...
+                </p>
+                <p class="text-sm text-slate-400 font-medium" id="quoteAuthor">— Fitness Wisdom</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a href="/progress" class="block bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 border border-slate-700 hover:border-primary transition group">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-3xl">📊</div>
+                        <div>
+                            <h3 class="text-lg font-bold mb-1">View Progress</h3>
+                            <p class="text-slate-400 text-sm">Track your gains</p>
+                        </div>
+                    </div>
+                    <svg class="w-6 h-6 text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </a>
+            <a href="/splits" class="block bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 border border-slate-700 hover:border-secondary transition group">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-3xl">🗓️</div>
+                        <div>
+                            <h3 class="text-lg font-bold mb-1">Manage Splits</h3>
+                            <p class="text-slate-400 text-sm">Edit your routine</p>
+                        </div>
+                    </div>
+                    <svg class="w-6 h-6 text-slate-400 group-hover:text-secondary group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- No Split Message -->
+    <div id="noSplitSection" class="hidden">
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-8 sm:p-12 border border-slate-700 text-center">
+            <div class="text-5xl sm:text-6xl mb-4">🗓️</div>
+            <h2 class="text-2xl sm:text-3xl font-bold mb-4">No Workout Split Set</h2>
+            <p class="text-slate-300 mb-6 sm:mb-8 max-w-md mx-auto">
+                Create your first workout split to start tracking your fitness journey
+            </p>
+            <a href="/splits" class="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition">
+                Create Split
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Motivational quotes array
+    const motivationalQuotes = [
+        { quote: "The only bad workout is the one that didn't happen.", author: "Unknown" },
+        { quote: "Your body can stand almost anything. It's your mind you have to convince.", author: "Unknown" },
+        { quote: "Success isn't always about greatness. It's about consistency.", author: "Dwayne Johnson" },
+        { quote: "The pain you feel today will be the strength you feel tomorrow.", author: "Unknown" },
+        { quote: "Don't limit your challenges. Challenge your limits.", author: "Unknown" },
+        { quote: "The only way to define your limits is by going beyond them.", author: "Arthur C. Clarke" },
+        { quote: "Strength doesn't come from what you can do. It comes from overcoming what you thought you couldn't.", author: "Rikki Rogers" },
+        { quote: "The difference between try and triumph is a little umph.", author: "Unknown" },
+        { quote: "You don't have to be extreme, just consistent.", author: "Unknown" },
+        { quote: "The body achieves what the mind believes.", author: "Napoleon Hill" },
+        { quote: "Take care of your body. It's the only place you have to live.", author: "Jim Rohn" },
+        { quote: "If it doesn't challenge you, it won't change you.", author: "Fred DeVito" },
+        { quote: "The hard days are what make you stronger.", author: "Aly Raisman" },
+        { quote: "Sweat is fat crying.", author: "Unknown" },
+        { quote: "You're only one workout away from a good mood.", author: "Unknown" }
+    ];
+
+    function getDailyQuote() {
+        // Use date as seed for consistent daily quote
+        const today = new Date();
+        const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+        const index = dayOfYear % motivationalQuotes.length;
+        return motivationalQuotes[index];
+    }
+
+    async function loadDashboard() {
+        // Set daily motivational quote
+        const dailyQuote = getDailyQuote();
+        document.getElementById('motivationalQuote').textContent = dailyQuote.quote;
+        document.getElementById('quoteAuthor').textContent = `— ${dailyQuote.author}`;
+
+        try {
+            // Load today's workout
+            const todayData = await apiCall('/today');
+            if (todayData.today) {
+                document.getElementById('todayDayName').textContent = todayData.today.day_name;
+                document.getElementById('todayMuscles').textContent = todayData.today.muscle_groups || '';
+                document.getElementById('todaySection').classList.remove('hidden');
+            } else {
+                document.getElementById('noSplitSection').classList.remove('hidden');
+            }
+        } catch (error) {
+            document.getElementById('noSplitSection').classList.remove('hidden');
+        }
+    }
+
+    function startWorkout() {
+        window.location.href = '/workout-session';
+    }
+
+    loadDashboard();
+</script>
+{% endblock %}

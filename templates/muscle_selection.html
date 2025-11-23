@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Select Muscle - Trackify{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold mb-2">Select Specific Muscle</h1>
+            <p class="text-slate-400" id="muscleGroupTitle"></p>
+        </div>
+        <button onclick="goBack()" class="text-slate-300 hover:text-white transition text-sm">
+            ← Back
+        </button>
+    </div>
+
+    <div id="specificMuscles" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const muscleGroup = localStorage.getItem('selectedMuscleGroup');
+
+    if (!muscleGroup) {
+        window.location.href = '/workout-session';
+    }
+
+    const MUSCLE_DEFINITIONS = {
+        'chest': [
+            { id: 'upper_chest', name: 'Upper Chest', desc: 'Clavicular head' },
+            { id: 'middle_chest', name: 'Middle Chest', desc: 'Sternal head' },
+            { id: 'lower_chest', name: 'Lower Chest', desc: 'Costal head' }
+        ],
+        'back': [
+            { id: 'lats', name: 'Lats', desc: 'Latissimus dorsi' },
+            { id: 'upper_back', name: 'Upper Back', desc: 'Traps, rhomboids' },
+            { id: 'lower_back', name: 'Lower Back', desc: 'Erector spinae' }
+        ],
+        'shoulders': [
+            { id: 'front_delt', name: 'Front Delts', desc: 'Anterior deltoid' },
+            { id: 'side_delt', name: 'Side Delts', desc: 'Lateral deltoid' },
+            { id: 'rear_delt', name: 'Rear Delts', desc: 'Posterior deltoid' }
+        ],
+        'biceps': [
+            { id: 'biceps_short_head', name: 'Short Head', desc: 'Inner bicep' },
+            { id: 'biceps_long_head', name: 'Long Head', desc: 'Outer bicep' },
+            { id: 'brachialis', name: 'Brachialis', desc: 'Under bicep' }
+        ],
+        'triceps': [
+            { id: 'triceps_long_head', name: 'Long Head', desc: 'Inner tricep' },
+            { id: 'triceps_lateral_head', name: 'Lateral Head', desc: 'Outer tricep' },
+            { id: 'triceps_medial_head', name: 'Medial Head', desc: 'Lower tricep' }
+        ],
+        'forearms': [
+            { id: 'forearms', name: 'Forearms', desc: 'All forearm exercises', direct: true }
+        ],
+        'legs': [
+            { id: 'quads', name: 'Quadriceps', desc: 'Front thigh' },
+            { id: 'hamstrings', name: 'Hamstrings', desc: 'Back thigh' },
+            { id: 'glutes', name: 'Glutes', desc: 'Buttocks' },
+            { id: 'calves', name: 'Calves', desc: 'Lower leg' }
+        ],
+        'core': [
+            { id: 'abs', name: 'Abs', desc: 'Rectus abdominis' },
+            { id: 'obliques', name: 'Obliques', desc: 'Side abs' }
+        ]
+    };
+
+    function loadMuscles() {
+        document.getElementById('muscleGroupTitle').textContent = 
+            muscleGroup.charAt(0).toUpperCase() + muscleGroup.slice(1);
+
+        const muscles = MUSCLE_DEFINITIONS[muscleGroup] || [];
+        const container = document.getElementById('specificMuscles');
+
+        container.innerHTML = muscles.map(muscle => `
+            <button onclick="selectSpecificMuscle('${muscle.id}')" 
+                class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 border border-slate-700 hover:border-primary transition group cursor-pointer text-left">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold mb-1 group-hover:text-primary transition">${muscle.name}</h3>
+                        <p class="text-sm text-slate-400">${muscle.desc}</p>
+                    </div>
+                    <svg class="w-6 h-6 text-slate-400 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </button>
+        `).join('');
+    }
+
+    function selectSpecificMuscle(specificMuscle) {
+        if (muscleGroup === 'forearms') {
+            localStorage.setItem('selectedSpecificMuscle', 'forearms');
+            window.location.href = '/exercise-list';
+        } else {
+            localStorage.setItem('selectedSpecificMuscle', specificMuscle);
+            window.location.href = '/exercise-list';
+        }
+    }
+
+    function goBack() {
+        window.location.href = '/workout-session';
+    }
+
+    loadMuscles();
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Splits - Trackify{% endblock %}
+
+<!-- Updated: Using base.html navbar with logo and streak -->
+
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <h1 class="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8">Workout Splits</h1>
+
+    <!-- Create Split Form -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700 mb-6 sm:mb-8">
+        <h3 class="text-xl sm:text-2xl font-bold mb-4">Create New Split</h3>
+        <form id="createSplitForm">
+            <div class="mb-4">
+                <label class="block text-xs sm:text-sm font-medium mb-2">Split Name</label>
+                <input type="text" id="splitName" placeholder="e.g., Push Pull Legs" required
+                    class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition text-sm sm:text-base">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs sm:text-sm font-medium mb-2">Days</label>
+                <div id="daysList" class="space-y-3 mb-3"></div>
+                <button type="button" onclick="addDay()" class="px-3 sm:px-4 py-2 bg-slate-700 rounded-lg hover:bg-slate-600 transition text-sm sm:text-base">
+                    + Add Day
+                </button>
+            </div>
+
+            <button type="submit" class="w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                Create Split
+            </button>
+        </form>
+    </div>
+
+    <!-- Splits List -->
+    <h3 class="text-xl sm:text-2xl font-bold mb-4">Your Splits</h3>
+    <div id="splitsList" class="grid sm:grid-cols-2 gap-4 sm:gap-6"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let dayCount = 0;
+
+    function addDay() {
+        const daysList = document.getElementById('daysList');
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'flex flex-col sm:flex-row gap-2 sm:gap-3';
+        dayDiv.innerHTML = `
+            <input type="text" placeholder="Day name (e.g., Push)" required
+                class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition day-name text-sm sm:text-base">
+            <input type="text" placeholder="Muscle groups"
+                class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition day-muscles text-sm sm:text-base">
+            <button type="button" onclick="this.parentElement.remove()" class="px-3 sm:px-4 py-2 sm:py-3 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition text-sm sm:text-base">
+                ✕
+            </button>
+        `;
+        daysList.appendChild(dayDiv);
+        dayCount++;
+    }
+
+    document.getElementById('createSplitForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('splitName').value;
+        const dayElements = document.querySelectorAll('#daysList > div');
+        
+        if (dayElements.length === 0) {
+            showToast('Please add at least one day', 'warning');
+            return;
+        }
+        
+        const days = Array.from(dayElements).map(el => ({
+            name: el.querySelector('.day-name').value,
+            muscle_groups: el.querySelector('.day-muscles').value
+        }));
+        
+        try {
+            await apiCall('/splits', 'POST', { name, days });
+            showToast('Split created successfully!', 'success');
+            document.getElementById('splitName').value = '';
+            document.getElementById('daysList').innerHTML = '';
+            dayCount = 0;
+            loadSplits();
+        } catch (error) {
+            showToast('Failed to create split', 'error');
+        }
+    });
+
+    async function loadSplits() {
+        try {
+            const data = await apiCall('/splits');
+            const splitsList = document.getElementById('splitsList');
+            
+            if (data.splits.length === 0) {
+                splitsList.innerHTML = '<p class="text-slate-400 col-span-2 text-center py-8">No splits created yet</p>';
+                return;
+            }
+            
+            splitsList.innerHTML = data.splits.map(split => `
+                <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+                    <h4 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">${split.name}</h4>
+                    <div class="space-y-2 mb-3 sm:mb-4">
+                        ${split.days.map(day => `
+                            <div class="bg-slate-900 rounded-lg p-2 sm:p-3">
+                                <p class="font-semibold text-sm sm:text-base">${day.name}</p>
+                                <p class="text-xs sm:text-sm text-slate-400">${day.muscle_groups || 'No muscle groups specified'}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="assignSplit(${split.id})" class="w-full px-4 py-2 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                        Use This Split
+                    </button>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Failed to load splits:', error);
+        }
+    }
+
+    async function assignSplit(splitId) {
+        try {
+            await apiCall('/splits/assign', 'POST', { split_id: splitId });
+            showToast('Split assigned successfully!', 'success');
+            setTimeout(() => window.location.href = '/dashboard', 1000);
+        } catch (error) {
+            showToast('Failed to assign split', 'error');
+        }
+    }
+
+    // Add initial day
+    addDay();
+    loadSplits();
+</script>
+{% endblock %}

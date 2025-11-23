@@ -121,7 +121,7 @@ def stats():
         .scalar()
     )
     
-    # Current streak
+    # Get all workout sessions
     sessions = (
         WorkoutSession.query
         .filter_by(user_id=user_id, completed=True)
@@ -129,18 +129,43 @@ def stats():
         .all()
     )
     
-    streak = 0
+    # Calculate current streak and longest streak
+    current_streak = 0
+    longest_streak = 0
+    workout_dates = []
+    
     if sessions:
+        # Get unique workout dates
         dates = sorted(set([s.started_at.date() for s in sessions]), reverse=True)
-        streak = 1
+        workout_dates = [d.isoformat() for d in dates]
+        
+        # Calculate current streak
+        today = datetime.now().date()
+        current_streak = 0
+        
+        # Check if there's a workout today or yesterday (to maintain streak)
+        if dates and (dates[0] == today or dates[0] == today - timedelta(days=1)):
+            current_streak = 1
+            for i in range(len(dates) - 1):
+                if (dates[i] - dates[i + 1]).days == 1:
+                    current_streak += 1
+                else:
+                    break
+        
+        # Calculate longest streak
+        temp_streak = 1
         for i in range(len(dates) - 1):
             if (dates[i] - dates[i + 1]).days == 1:
-                streak += 1
+                temp_streak += 1
+                longest_streak = max(longest_streak, temp_streak)
             else:
-                break
+                temp_streak = 1
+        longest_streak = max(longest_streak, temp_streak)
     
     return jsonify({
         "total_workouts": total_workouts,
         "total_sets": total_sets or 0,
-        "current_streak": streak
+        "current_streak": current_streak,
+        "longest_streak": longest_streak,
+        "workout_dates": workout_dates
     }), 200

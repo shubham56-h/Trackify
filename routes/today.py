@@ -197,3 +197,73 @@ def finish_workout():
             "muscle_groups": next_day.muscle_groups if next_day else None
         }
     }), 200
+
+
+@today_bp.route("/cancel", methods=["POST"])
+@jwt_required()
+def cancel_workout():
+    """Cancel active workout - Delete session and all sets without moving to next day"""
+    user_id = int(get_jwt_identity())
+    
+    # Get active session
+    session = WorkoutSession.query.filter_by(
+        user_id=user_id,
+        completed=False
+    ).first()
+    
+    if not session:
+        return jsonify({"message": "No active workout session"}), 404
+    
+    # Delete the session (cascade will delete all sets)
+    db.session.delete(session)
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Workout cancelled successfully"
+    }), 200
+
+
+@today_bp.route("/exercise-history/<exercise_name>", methods=["GET"])
+@jwt_required()
+def get_exercise_history(exercise_name):
+    """Get past performance data for a specific exercise"""
+    user_id = int(get_jwt_identity())
+    
+    # Get last 3 completed sessions for this exercise
+    past_sessions = db.session.query(WorkoutSession).join(
+        WorkoutSet, WorkoutSession.id == WorkoutSet.session_id
+    ).filter(
+        WorkoutSession.user_id == user_id,
+        WorkoutSession.completed == True,
+        WorkoutSet.exercise_name == exercise_name
+    ).order_by(WorkoutSession.ended_at.desc()).limit(3).all()
+    
+    history = []
+    for session in past_sessions:
+        # Get all sets for this exercise in this session
+        sets = WorkoutSet.query.filter_by(
+            session_id=session.id,
+            exercise_name=exercise_name
+        ).order_by(WorkoutSet.set_number).all()
+        
+        if sets:
+            history.append({
+                "date": session.ended_at.strftime("%b %d, %Y") if session.ended_at else "Unknown",
+                "timestamp": session.ended_at.isoformat() if session.ended_at else None,
+                "total_sets": len(sets),
+                "sets": [
+                    {
+                        "set_number": s.set_number,
+                        "reps": s.reps,
+                        "weight": s.weight,
+                        "volume": s.reps * s.weight
+                    } for s in sets
+                ],
+                "total_volume": sum(s.reps * s.weight for s in sets),
+                "max_weight": max(s.weight for s in sets)
+            })
+    
+    return jsonify({
+        "exercise_name": exercise_name,
+        "history": history
+    }), 200

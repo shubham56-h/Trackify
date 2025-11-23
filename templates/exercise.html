@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Exercise - Trackify{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <!-- Header -->
+    <div class="mb-6 sm:mb-8 flex justify-between items-start">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl sm:text-4xl font-bold mb-2 break-words" id="exerciseName"></h1>
+            <p class="text-sm sm:text-base text-slate-400">Add your sets below</p>
+        </div>
+        <button onclick="goBack()" class="text-slate-300 hover:text-white transition text-sm ml-4 flex-shrink-0">
+            ← Back
+        </button>
+    </div>
+
+    <!-- Exercise History Section -->
+    <div id="historySection" class="mb-8 sm:mb-10 hidden">
+        <div class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-5 sm:p-6 border border-blue-500/30">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-blue-300">📊 Past Performance</h3>
+                <button id="toggleHistoryBtn" onclick="toggleHistory()" 
+                    class="text-xs text-blue-400 hover:text-blue-300 transition font-semibold">
+                    View More →
+                </button>
+            </div>
+            <div id="historyCards" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+        </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="relative mb-8 sm:mb-10">
+        <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-slate-700"></div>
+        </div>
+        <div class="relative flex justify-center text-xs uppercase">
+            <span class="bg-slate-900 px-4 text-slate-500">Current Workout</span>
+        </div>
+    </div>
+
+    <!-- Add Set Form -->
+    <div class="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl p-4 sm:p-6 border border-green-500/30 mb-6 sm:mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg sm:text-xl font-bold">Add Set #<span id="nextSetNumber">1</span></h3>
+            <div id="lastSetHint" class="text-xs text-slate-400 hidden">
+                Last time: <span class="text-primary font-semibold" id="lastSetData"></span>
+            </div>
+        </div>
+        <form id="addSetForm" class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+            <div>
+                <label class="block text-xs sm:text-sm font-medium mb-2">Reps</label>
+                <input type="number" id="reps" min="1" required
+                    class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition text-sm sm:text-base">
+            </div>
+            <div>
+                <label class="block text-xs sm:text-sm font-medium mb-2">Weight (kg)</label>
+                <input type="number" id="weight" step="0.5" min="0" required
+                    class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition text-sm sm:text-base">
+            </div>
+            <div class="col-span-2 md:col-span-1 flex items-end">
+                <button type="submit" class="w-full px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                    Add Set
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sets List -->
+    <div class="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl p-4 sm:p-6 border border-green-500/30 mb-6 sm:mb-8">
+        <h3 class="text-lg sm:text-xl font-bold mb-4 text-green-300">✅ Sets Completed</h3>
+        <div id="setsList" class="space-y-3"></div>
+        <div id="noSets" class="text-center text-slate-400 py-6 sm:py-8 text-sm sm:text-base">
+            No sets added yet. Add your first set above!
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <button onclick="finishExercise()" 
+            class="flex-1 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-secondary to-primary rounded-lg font-semibold text-base sm:text-lg hover:opacity-90 transition">
+            Finish Exercise ✅
+        </button>
+        <button onclick="goBack()" 
+            class="flex-1 sm:flex-none px-6 sm:px-8 py-3 sm:py-4 bg-slate-700 text-slate-300 rounded-lg font-semibold text-base sm:text-lg hover:bg-slate-600 transition">
+            Back to Workout
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const exerciseName = localStorage.getItem('currentExercise');
+    let sets = [];
+    let exerciseHistory = [];
+    let showAllHistory = false;
+
+    if (!exerciseName) {
+        window.location.href = '/workout-session';
+    }
+
+    document.getElementById('exerciseName').textContent = exerciseName;
+
+    function timeAgo(timestamp) {
+        if (!timestamp) return 'Unknown';
+        
+        const now = new Date();
+        const past = new Date(timestamp);
+        const diffMs = now - past;
+        const diffSec = Math.floor(diffMs / 1000);
+        const diffMin = Math.floor(diffSec / 60);
+        const diffHour = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHour / 24);
+        const diffWeek = Math.floor(diffDay / 7);
+        const diffMonth = Math.floor(diffDay / 30);
+        
+        if (diffSec < 60) return 'Just now';
+        if (diffMin < 60) return `${diffMin} min${diffMin > 1 ? 's' : ''} ago`;
+        if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+        if (diffDay < 7) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+        if (diffWeek < 4) return `${diffWeek} week${diffWeek > 1 ? 's' : ''} ago`;
+        if (diffMonth < 12) return `${diffMonth} month${diffMonth > 1 ? 's' : ''} ago`;
+        
+        const diffYear = Math.floor(diffDay / 365);
+        return `${diffYear} year${diffYear > 1 ? 's' : ''} ago`;
+    }
+
+    async function loadExerciseHistory() {
+        try {
+            const data = await apiCall(`/today/exercise-history/${encodeURIComponent(exerciseName)}`);
+            exerciseHistory = data.history || [];
+            renderHistory();
+        } catch (error) {
+            console.error('Failed to load exercise history:', error);
+        }
+    }
+
+    function toggleHistory() {
+        showAllHistory = !showAllHistory;
+        renderHistory();
+        
+        const btn = document.getElementById('toggleHistoryBtn');
+        if (showAllHistory) {
+            btn.textContent = '← View Less';
+        } else {
+            btn.textContent = 'View More →';
+        }
+    }
+
+    function renderHistory() {
+        if (exerciseHistory.length === 0) return;
+
+        const historySection = document.getElementById('historySection');
+        const historyCards = document.getElementById('historyCards');
+        const toggleBtn = document.getElementById('toggleHistoryBtn');
+        
+        historySection.classList.remove('hidden');
+        
+        const sessionsToShow = showAllHistory ? exerciseHistory : exerciseHistory.slice(0, 1);
+        
+        if (exerciseHistory.length <= 1) {
+            toggleBtn.classList.add('hidden');
+        } else {
+            toggleBtn.classList.remove('hidden');
+        }
+        
+        historyCards.innerHTML = sessionsToShow.map((session, index) => {
+            const isRecent = index === 0;
+            const borderColor = isRecent ? 'border-primary/50' : 'border-slate-700';
+            const bgColor = isRecent ? 'bg-primary/5' : 'bg-slate-800/30';
+            
+            const setsDisplay = session.sets.map(s => 
+                `<div class="flex items-center justify-between py-1">
+                    <span class="text-xs text-slate-500">Set ${s.set_number}</span>
+                    <span class="font-bold text-base text-white">${s.reps}</span>
+                    <span class="text-xs text-slate-400">×</span>
+                    <span class="font-bold text-base text-white">${s.weight}kg</span>
+                </div>`
+            ).join('');
+            
+            return `
+                <div class="relative ${bgColor} backdrop-blur-lg rounded-lg p-4 border ${borderColor}">
+                    ${isRecent ? '<div class="absolute top-2 right-2 text-xs bg-primary/20 text-primary px-2 py-1 rounded">Last</div>' : ''}
+                    <div class="text-xs text-slate-400 mb-3">${timeAgo(session.timestamp)}</div>
+                    <div class="space-y-1 mb-3">
+                        ${setsDisplay}
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-400 pt-2 border-t border-slate-700">
+                        <span>Vol: ${session.total_volume.toFixed(0)}kg</span>
+                        <span>Max: ${session.max_weight}kg</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateSetHint() {
+        const nextSetNum = sets.length + 1;
+        document.getElementById('nextSetNumber').textContent = nextSetNum;
+        
+        if (exerciseHistory.length > 0) {
+            const lastSession = exerciseHistory[0];
+            const lastSet = lastSession.sets.find(s => s.set_number === nextSetNum);
+            
+            if (lastSet) {
+                document.getElementById('lastSetData').textContent = 
+                    `${lastSet.reps} reps × ${lastSet.weight}kg`;
+                document.getElementById('lastSetHint').classList.remove('hidden');
+            } else {
+                document.getElementById('lastSetHint').classList.add('hidden');
+            }
+        }
+    }
+
+    document.getElementById('addSetForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const reps = parseInt(document.getElementById('reps').value);
+        const weight = parseFloat(document.getElementById('weight').value);
+        
+        try {
+            const data = await apiCall('/today/add-set', 'POST', {
+                exercise_name: exerciseName,
+                reps,
+                weight
+            });
+            
+            sets.push(data.set);
+            renderSets();
+            updateSetHint();
+            
+            document.getElementById('reps').value = '';
+            document.getElementById('weight').value = '';
+            document.getElementById('reps').focus();
+            
+        } catch (error) {
+            showToast('Failed to add set: ' + error.message, 'error');
+        }
+    });
+
+    function renderSets() {
+        const setsList = document.getElementById('setsList');
+        const noSets = document.getElementById('noSets');
+        
+        if (sets.length === 0) {
+            noSets.classList.remove('hidden');
+            setsList.innerHTML = '';
+            return;
+        }
+        
+        noSets.classList.add('hidden');
+        setsList.innerHTML = sets.map((set, index) => `
+            <div class="flex items-center justify-between bg-slate-900 rounded-lg p-3 sm:p-4 border border-slate-700">
+                <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center font-bold text-sm sm:text-base flex-shrink-0">
+                        ${set.set_number}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-sm sm:text-base">${set.reps} reps × ${set.weight} kg</p>
+                        <p class="text-xs sm:text-sm text-slate-400">Volume: ${(set.reps * set.weight).toFixed(1)} kg</p>
+                    </div>
+                </div>
+                <div class="text-xl sm:text-2xl ml-2">✅</div>
+            </div>
+        `).join('');
+    }
+
+    async function finishExercise() {
+        if (sets.length === 0) {
+            const confirmed = await showConfirm(
+                'You haven\'t added any sets yet. Your progress won\'t be saved.',
+                'Go Back Without Saving?'
+            );
+            if (!confirmed) return;
+        }
+        goBack();
+    }
+
+    function goBack() {
+        localStorage.removeItem('currentExercise');
+        window.history.back();
+    }
+
+    async function init() {
+        await loadExerciseHistory();
+        renderSets();
+        updateSetHint();
+    }
+    
+    init();
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base_public.html" %}
+
+{% block title %}Login - Trackify{% endblock %}
+
+{% block nav_buttons %}
+<a href="/signup" class="px-3 sm:px-6 py-2 text-sm sm:text-base bg-gradient-to-r from-primary to-secondary rounded-lg hover:opacity-90 transition">
+    Sign Up
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 sm:py-20">
+    <div class="max-w-md w-full">
+        <!-- Logo and Title -->
+        <div class="text-center mb-8">
+            <div class="flex justify-center mb-4">
+                <svg class="w-16 h-16 sm:w-20 sm:h-20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="10" y1="25" x2="90" y2="25" stroke="#10b981" stroke-width="5" stroke-linecap="round"/>
+                    <rect x="8" y="20" width="8" height="10" rx="1" fill="#10b981"/>
+                    <rect x="84" y="20" width="8" height="10" rx="1" fill="#10b981"/>
+                    <circle cx="50" cy="40" r="8" fill="#6366f1"/>
+                    <line x1="50" y1="48" x2="50" y2="70" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="50" y1="52" x2="30" y2="25" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="50" y1="52" x2="70" y2="25" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="50" y1="70" x2="42" y2="90" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="50" y1="70" x2="58" y2="90" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+                Welcome Back
+            </h2>
+            <p class="text-slate-400 text-sm sm:text-base">Sign in to continue your fitness journey</p>
+        </div>
+
+        <!-- Login Form Card -->
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-slate-700 shadow-xl">
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-slate-300">Email Address</label>
+                    <input type="email" id="email" required autocomplete="email"
+                        placeholder="you@example.com"
+                        class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-white placeholder-slate-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-slate-300">Password</label>
+                    <input type="password" id="password" required minlength="6" autocomplete="current-password"
+                        placeholder="••••••••"
+                        class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-white placeholder-slate-500">
+                </div>
+                
+                <div id="errorMessage" class="hidden bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg text-sm"></div>
+                
+                <button type="submit" id="loginBtn"
+                    class="w-full py-3.5 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold text-lg hover:opacity-90 transition transform hover:scale-[1.02] shadow-lg shadow-primary/20">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-slate-400 text-sm">
+                    Don't have an account? 
+                    <a href="/signup" class="text-primary hover:text-secondary transition font-semibold">Sign up</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer Note -->
+        <p class="text-center text-slate-500 text-xs mt-6">
+            By signing in, you agree to track your fitness progress
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const API_BASE = '/api';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('errorMessage');
+        const loginBtn = document.getElementById('loginBtn');
+        
+        errorDiv.classList.add('hidden');
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
+        
+        try {
+            const response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed');
+            }
+            
+            localStorage.setItem('authToken', data.access_token);
+            window.location.href = '/dashboard';
+            
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.classList.remove('hidden');
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Sign In';
+        }
+    });
+</script>
+{% endblock %}

@@ -244,21 +244,24 @@ def get_exercise_history(exercise_name):
     """Get past performance data for a specific exercise"""
     user_id = int(get_jwt_identity())
     
-    # Get last 3 completed sessions for this exercise
+    # Normalize exercise name (trim whitespace)
+    exercise_name = exercise_name.strip()
+    
+    # Get last 3 completed sessions for this exercise (case-insensitive)
     past_sessions = db.session.query(WorkoutSession).join(
         WorkoutSet, WorkoutSession.id == WorkoutSet.session_id
     ).filter(
         WorkoutSession.user_id == user_id,
         WorkoutSession.completed == True,
-        WorkoutSet.exercise_name == exercise_name
-    ).order_by(WorkoutSession.ended_at.desc()).limit(3).all()
+        db.func.lower(WorkoutSet.exercise_name) == exercise_name.lower()
+    ).distinct().order_by(WorkoutSession.ended_at.desc()).limit(3).all()
     
     history = []
     for session in past_sessions:
-        # Get all sets for this exercise in this session
-        sets = WorkoutSet.query.filter_by(
-            session_id=session.id,
-            exercise_name=exercise_name
+        # Get all sets for this exercise in this session (case-insensitive)
+        sets = WorkoutSet.query.filter(
+            WorkoutSet.session_id == session.id,
+            db.func.lower(WorkoutSet.exercise_name) == exercise_name.lower()
         ).order_by(WorkoutSet.set_number).all()
         
         if sets:

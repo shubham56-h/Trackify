@@ -287,7 +287,23 @@
             );
             if (!confirmed) return;
         }
+        
+        // Mark exercise as completed if sets were added
+        if (sets.length > 0 && currentExercise.id) {
+            markExerciseCompleted(currentExercise.id);
+        }
+        
         goBack();
+    }
+
+    function markExerciseCompleted(exerciseId) {
+        const stored = sessionStorage.getItem('completedExercises');
+        let completed = stored ? JSON.parse(stored) : [];
+        
+        if (!completed.includes(exerciseId)) {
+            completed.push(exerciseId);
+            sessionStorage.setItem('completedExercises', JSON.stringify(completed));
+        }
     }
 
     function goBack() {

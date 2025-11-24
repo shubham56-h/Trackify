@@ -88,6 +88,72 @@
         Cancel will discard this session without moving to the next day
     </p>
 </div>
+
+<!-- Workout Summary Modal -->
+<div id="summaryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-primary/30 shadow-2xl shadow-primary/20 animate-scale-in">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary/20 to-secondary/20 p-6 border-b border-slate-700">
+            <div class="text-center">
+                <h2 class="text-2xl sm:text-3xl font-bold mb-2">Workout Complete!</h2>
+                <p class="text-slate-300 text-sm" id="summaryDuration">Duration: 0 min</p>
+            </div>
+        </div>
+
+        <!-- Exercises List -->
+        <div class="p-6">
+            <h3 class="text-lg font-bold mb-4">Exercises Completed</h3>
+            <div id="exercisesSummary" class="space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Exercises will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="p-6 pt-0 flex flex-col sm:flex-row gap-3">
+            <button onclick="confirmFinish()" 
+                class="flex-1 px-6 py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition">
+                Confirm & Finish
+            </button>
+            <button onclick="closeSummaryModal()" 
+                class="flex-1 sm:flex-none px-6 py-3 bg-slate-700 text-slate-300 rounded-lg font-semibold hover:bg-slate-600 transition">
+                Continue Workout
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes scale-in {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    .animate-scale-in {
+        animation: scale-in 0.3s ease-out;
+    }
+    
+    /* Custom scrollbar for exercise list */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(51, 65, 85, 0.3);
+        border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.5);
+        border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.7);
+    }
+</style>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -113,14 +179,54 @@
 
     async function finishWorkout() {
         try {
-            const confirmed = await showConfirm(
-                'This will complete your workout and move you to the next day in your split.',
-                'Finish Workout?'
-            );
+            // Load session summary
+            const summary = await apiCall('/today/session-summary');
             
-            if (!confirmed) return;
+            // Show summary modal
+            showSummaryModal(summary);
+        } catch (error) {
+            if (error.message.includes('No active workout session')) {
+                showToast('No active workout to finish', 'warning');
+                setTimeout(() => window.location.href = '/dashboard', 1000);
+            } else {
+                showToast('Failed to load workout summary', 'error');
+            }
+        }
+    }
 
+    function showSummaryModal(summary) {
+        // Populate duration
+        document.getElementById('summaryDuration').textContent = `Duration: ${summary.duration_minutes} min`;
+
+        // Populate exercises list
+        const exercisesList = document.getElementById('exercisesSummary');
+        if (summary.exercises.length === 0) {
+            exercisesList.innerHTML = '<p class="text-slate-400 text-center py-4">No exercises completed</p>';
+        } else {
+            exercisesList.innerHTML = summary.exercises.map(exercise => `
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700 flex items-center justify-between hover:border-primary/30 transition">
+                    <span class="font-medium text-white">${exercise.name}</span>
+                    <span class="text-sm text-slate-400">${exercise.total_sets} sets</span>
+                </div>
+            `).join('');
+        }
+
+        // Show modal
+        document.getElementById('summaryModal').classList.remove('hidden');
+    }
+
+    function closeSummaryModal() {
+        document.getElementById('summaryModal').classList.add('hidden');
+    }
+
+    async function confirmFinish() {
+        try {
             const data = await apiCall('/today/finish', 'POST');
+            closeSummaryModal();
+            
+            // Clear completed exercises from session
+            sessionStorage.removeItem('completedExercises');
+            
             showToast(`Workout completed! 🎉 Next workout: ${data.next_day.name}`, 'success');
             setTimeout(() => window.location.href = '/dashboard', 1500);
         } catch (error) {

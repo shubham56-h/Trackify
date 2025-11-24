@@ -127,10 +127,9 @@ def assign_split():
 
 @splits_bp.route('/copy/<int:split_id>', methods=['POST'])
 @jwt_required()
-def copy_template_split():
+def copy_template_split(split_id):
     """Copy a template split to user's own splits"""
     user_id = int(get_jwt_identity())
-    split_id = request.view_args.get('split_id')
     
     # Get the template split
     template = Split.query.get(split_id)

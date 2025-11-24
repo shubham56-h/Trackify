@@ -81,13 +81,6 @@
                 </a>
                 
                 <div class="flex items-center gap-4">
-                    <!-- Streak Button -->
-                    <button onclick="toggleStreakModal()" 
-                        class="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition group">
-                        <span class="text-xl">🔥</span>
-                        <span class="font-bold text-white" id="navStreak">0</span>
-                    </button>
-                    
                     <!-- Hamburger Menu -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" 
@@ -162,44 +155,7 @@
         </div>
     </div>
 
-    <!-- Streak Calendar Modal -->
-    <div id="streakModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="closeStreakModal(event)">
-        <div class="bg-slate-800 rounded-xl p-6 max-w-2xl w-full border border-slate-700 shadow-2xl" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Workout Streak 🔥</h2>
-                <button onclick="toggleStreakModal()" class="text-slate-400 hover:text-white transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-slate-900 rounded-lg p-4 text-center">
-                    <p class="text-sm text-slate-400 mb-1">Current Streak</p>
-                    <p class="text-3xl font-bold text-primary" id="modalCurrentStreak">0</p>
-                </div>
-                <div class="bg-slate-900 rounded-lg p-4 text-center">
-                    <p class="text-sm text-slate-400 mb-1">Longest Streak</p>
-                    <p class="text-3xl font-bold text-secondary" id="modalLongestStreak">0</p>
-                </div>
-            </div>
-            
-            <div class="mb-4">
-                <p class="text-sm text-slate-400 mb-3">Last 30 days</p>
-                <div id="streakCalendar" class="grid grid-cols-10 gap-1.5"></div>
-            </div>
-            
-            <div class="flex items-center gap-2 text-xs text-slate-400">
-                <span>Less</span>
-                <div class="flex gap-1">
-                    <div class="w-3 h-3 sm:w-4 sm:h-4 bg-slate-700 rounded-sm"></div>
-                    <div class="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-sm"></div>
-                </div>
-                <span>More</span>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Main Content -->
     {% block content %}{% endblock %}
@@ -255,66 +211,6 @@
             // Set user email
             const email = getUserEmail();
             document.getElementById('userEmail').textContent = email;
-
-            // Load streak
-            try {
-                const stats = await apiCall('/progress/stats');
-                const streak = stats.current_streak || 0;
-                
-                document.getElementById('navStreak').textContent = streak;
-                document.getElementById('modalCurrentStreak').textContent = streak;
-                document.getElementById('modalLongestStreak').textContent = stats.longest_streak || 0;
-                
-                generateStreakCalendar(stats.workout_dates || []);
-            } catch (error) {
-                console.error('Failed to load navbar stats:', error);
-            }
-        }
-
-        function toggleStreakModal() {
-            const modal = document.getElementById('streakModal');
-            modal.classList.toggle('hidden');
-        }
-
-        function closeStreakModal(event) {
-            if (event.target.id === 'streakModal') {
-                toggleStreakModal();
-            }
-        }
-
-        function generateStreakCalendar(workoutDates) {
-            const calendar = document.getElementById('streakCalendar');
-            const today = new Date();
-            const daysToShow = 30;
-            
-            const workoutSet = new Set(workoutDates.map(d => d.split('T')[0]));
-            
-            let html = '';
-            for (let i = daysToShow - 1; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                
-                const hasWorkout = workoutSet.has(dateStr);
-                const isToday = i === 0;
-                
-                let bgColor = 'bg-slate-700';
-                if (hasWorkout) {
-                    bgColor = 'bg-green-500';
-                } else if (isToday) {
-                    bgColor = 'bg-slate-600 border border-primary';
-                }
-                
-                html += `
-                    <div class="relative group">
-                        <div class="${bgColor} w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition hover:scale-125" 
-                             title="${dateStr}${hasWorkout ? ' - Workout completed' : ''}">
-                        </div>
-                    </div>
-                `;
-            }
-            
-            calendar.innerHTML = html;
         }
 
         function logout() {

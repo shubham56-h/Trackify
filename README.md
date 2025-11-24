@@ -5,10 +5,10 @@ A modern, full-stack fitness tracking application built with Flask and PostgreSQ
 ## Features
 
 - 🏋️ **Workout Tracking**: Track exercises, sets, reps, and weights
-- 📊 **Progress Monitoring**: Visualize your fitness journey with charts and statistics
+- 📊 **Progress Monitoring**: View detailed workout history with set-wise breakdown
 - 🗓️ **Custom Splits**: Create and manage personalized workout splits
-- 🔥 **Streak Tracking**: Stay motivated with workout streaks
 - 💪 **Muscle Group Focus**: Organize workouts by specific muscle groups
+- ✅ **Exercise Tracking**: Mark completed exercises during your workout
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 
 ## Tech Stack

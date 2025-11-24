@@ -124,12 +124,13 @@ def add_set():
     user_id = int(get_jwt_identity())
     data = request.get_json() or {}
     
-    exercise_name = data.get("exercise_name")
+    exercise_id = data.get("exercise_id")
+    exercise_name = data.get("exercise_name")  # Fallback for backward compatibility
     reps = data.get("reps")
     weight = data.get("weight")
     
-    if not exercise_name or reps is None or weight is None:
-        return jsonify({"message": "exercise_name, reps, and weight required"}), 400
+    if (not exercise_id and not exercise_name) or reps is None or weight is None:
+        return jsonify({"message": "exercise_id (or exercise_name), reps, and weight required"}), 400
     
     # Get active session
     session = WorkoutSession.query.filter_by(
@@ -140,14 +141,29 @@ def add_set():
     if not session:
         return jsonify({"message": "No active workout session. Start a workout first."}), 404
     
+    # If exercise_id provided, get the exercise name from database
+    if exercise_id:
+        from models import Exercise
+        exercise = Exercise.query.get(exercise_id)
+        if not exercise:
+            return jsonify({"message": "Exercise not found"}), 404
+        exercise_name = exercise.name
+    
     # Count existing sets for this exercise in this session
-    set_count = WorkoutSet.query.filter_by(
-        session_id=session.id,
-        exercise_name=exercise_name
-    ).count()
+    if exercise_id:
+        set_count = WorkoutSet.query.filter_by(
+            session_id=session.id,
+            exercise_id=exercise_id
+        ).count()
+    else:
+        set_count = WorkoutSet.query.filter_by(
+            session_id=session.id,
+            exercise_name=exercise_name
+        ).count()
     
     workout_set = WorkoutSet(
         session_id=session.id,
+        exercise_id=exercise_id,
         exercise_name=exercise_name,
         set_number=set_count + 1,
         reps=int(reps),
@@ -160,6 +176,7 @@ def add_set():
         "message": "Set added",
         "set": {
             "id": workout_set.id,
+            "exercise_id": workout_set.exercise_id,
             "exercise_name": workout_set.exercise_name,
             "set_number": workout_set.set_number,
             "reps": workout_set.reps,
@@ -238,30 +255,39 @@ def cancel_workout():
     }), 200
 
 
-@today_bp.route("/exercise-history/<exercise_name>", methods=["GET"])
+@today_bp.route("/exercise-history/<int:exercise_id>", methods=["GET"])
 @jwt_required()
-def get_exercise_history(exercise_name):
+def get_exercise_history(exercise_id):
     """Get past performance data for a specific exercise"""
     user_id = int(get_jwt_identity())
     
-    # Normalize exercise name (trim whitespace)
-    exercise_name = exercise_name.strip()
+    # Get exercise details
+    from models import Exercise
+    exercise = Exercise.query.get(exercise_id)
+    if not exercise:
+        return jsonify({"message": "Exercise not found"}), 404
     
-    # Get last 3 completed sessions for this exercise (case-insensitive)
+    # Get last 3 completed sessions for this exercise
     past_sessions = db.session.query(WorkoutSession).join(
         WorkoutSet, WorkoutSession.id == WorkoutSet.session_id
     ).filter(
         WorkoutSession.user_id == user_id,
         WorkoutSession.completed == True,
-        db.func.lower(WorkoutSet.exercise_name) == exercise_name.lower()
+        db.or_(
+            WorkoutSet.exercise_id == exercise_id,
+            db.func.lower(WorkoutSet.exercise_name) == exercise.name.lower()  # Fallback for old data
+        )
     ).distinct().order_by(WorkoutSession.ended_at.desc()).limit(3).all()
     
     history = []
     for session in past_sessions:
-        # Get all sets for this exercise in this session (case-insensitive)
+        # Get all sets for this exercise in this session
         sets = WorkoutSet.query.filter(
             WorkoutSet.session_id == session.id,
-            db.func.lower(WorkoutSet.exercise_name) == exercise_name.lower()
+            db.or_(
+                WorkoutSet.exercise_id == exercise_id,
+                db.func.lower(WorkoutSet.exercise_name) == exercise.name.lower()
+            )
         ).order_by(WorkoutSet.set_number).all()
         
         if sets:
@@ -282,6 +308,7 @@ def get_exercise_history(exercise_name):
             })
     
     return jsonify({
-        "exercise_name": exercise_name,
+        "exercise_id": exercise_id,
+        "exercise_name": exercise.name,
         "history": history
     }), 200

@@ -75,13 +75,15 @@ class WorkoutSet(db.Model):
     __tablename__ = 'workout_sets'
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.Integer, db.ForeignKey('workout_sessions.id'), nullable=False)
-    exercise_name = db.Column(db.String(120), nullable=False)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('exercises.id'), nullable=True)  # New field
+    exercise_name = db.Column(db.String(120), nullable=False)  # Keep for backward compatibility
     set_number = db.Column(db.Integer, nullable=False)
     reps = db.Column(db.Integer, nullable=False)
     weight = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     session = db.relationship('WorkoutSession', back_populates='sets')
+    exercise = db.relationship('Exercise', backref='workout_sets')
 
 
 class Exercise(db.Model):

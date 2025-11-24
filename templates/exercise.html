@@ -91,16 +91,24 @@
 
 {% block extra_scripts %}
 <script>
-    const exerciseName = localStorage.getItem('currentExercise');
+    const exerciseData = localStorage.getItem('currentExercise');
+    let currentExercise = null;
     let sets = [];
     let exerciseHistory = [];
     let showAllHistory = false;
 
-    if (!exerciseName) {
+    if (!exerciseData) {
         window.location.href = '/workout-session';
     }
 
-    document.getElementById('exerciseName').textContent = exerciseName;
+    try {
+        currentExercise = JSON.parse(exerciseData);
+    } catch (e) {
+        // Fallback for old format (just string)
+        currentExercise = { name: exerciseData, id: null };
+    }
+
+    document.getElementById('exerciseName').textContent = currentExercise.name;
 
     function timeAgo(timestamp) {
         if (!timestamp) return 'Unknown';
@@ -127,8 +135,12 @@
     }
 
     async function loadExerciseHistory() {
+        if (!currentExercise.id) {
+            console.log('No exercise ID, skipping history');
+            return;
+        }
         try {
-            const data = await apiCall(`/today/exercise-history/${encodeURIComponent(exerciseName)}`);
+            const data = await apiCall(`/today/exercise-history/${currentExercise.id}`);
             exerciseHistory = data.history || [];
             renderHistory();
         } catch (error) {
@@ -221,7 +233,8 @@
         
         try {
             const data = await apiCall('/today/add-set', 'POST', {
-                exercise_name: exerciseName,
+                exercise_id: currentExercise.id,
+                exercise_name: currentExercise.name,
                 reps,
                 weight
             });

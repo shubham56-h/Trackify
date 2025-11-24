@@ -63,7 +63,7 @@
         }
 
         container.innerHTML = exercises.map(exercise => `
-            <button onclick="selectExercise('${exercise.name}')" 
+            <button onclick='selectExercise(${JSON.stringify(exercise)})' 
                 class="w-full bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-5 border border-slate-700 hover:border-primary transition group cursor-pointer text-left">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3 flex-1 min-w-0">
@@ -99,8 +99,8 @@
         }
     });
 
-    function selectExercise(exerciseName) {
-        localStorage.setItem('currentExercise', exerciseName);
+    function selectExercise(exercise) {
+        localStorage.setItem('currentExercise', JSON.stringify(exercise));
         window.location.href = '/exercise';
     }
 

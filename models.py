@@ -23,8 +23,9 @@ class User(db.Model):
 class Split(db.Model):
     __tablename__ = 'splits'
     id = db.Column(db.Integer, primary_key=True)
-    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Nullable for system templates
     name = db.Column(db.String(120), nullable=False)
+    is_template = db.Column(db.Boolean, default=False)  # True for public templates
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     owner = db.relationship('User', back_populates='splits')

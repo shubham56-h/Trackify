@@ -49,15 +49,39 @@ def create_split():
 @splits_bp.route('', methods=['GET'])
 @jwt_required()
 def get_splits():
-    """Get all splits for the user"""
+    """Get all splits for the user + template splits"""
     user_id = int(get_jwt_identity())
-    splits = Split.query.filter_by(owner_id=user_id).all()
+    
+    # Get user's own splits
+    user_splits = Split.query.filter_by(owner_id=user_id, is_template=False).all()
+    
+    # Get template splits (public/shareable)
+    template_splits = Split.query.filter_by(is_template=True).all()
     
     result = []
-    for split in splits:
+    
+    # Add user's splits
+    for split in user_splits:
         result.append({
             'id': split.id,
             'name': split.name,
+            'is_template': False,
+            'is_mine': True,
+            'days': [{
+                'id': day.id,
+                'position': day.position,
+                'name': day.name,
+                'muscle_groups': day.muscle_groups
+            } for day in split.days]
+        })
+    
+    # Add template splits
+    for split in template_splits:
+        result.append({
+            'id': split.id,
+            'name': split.name,
+            'is_template': True,
+            'is_mine': False,
             'days': [{
                 'id': day.id,
                 'position': day.position,
@@ -99,3 +123,56 @@ def assign_split():
         'assignment_id': existing.id,
         'current_position': existing.current_position
     }), 200
+
+
+@splits_bp.route('/copy/<int:split_id>', methods=['POST'])
+@jwt_required()
+def copy_template_split():
+    """Copy a template split to user's own splits"""
+    user_id = int(get_jwt_identity())
+    split_id = request.view_args.get('split_id')
+    
+    # Get the template split
+    template = Split.query.get(split_id)
+    if not template:
+        return jsonify({'message': 'Split not found'}), 404
+    
+    # Create a copy for the user
+    new_split = Split(
+        owner_id=user_id,
+        name=template.name,
+        is_template=False
+    )
+    db.session.add(new_split)
+    db.session.flush()
+    
+    # Copy all days
+    for day in template.days:
+        new_day = SplitDay(
+            split_id=new_split.id,
+            position=day.position,
+            name=day.name,
+            muscle_groups=day.muscle_groups
+        )
+        db.session.add(new_day)
+    
+    # Auto-assign to user
+    assignment = UserSplitAssignment.query.filter_by(user_id=user_id).first()
+    if assignment:
+        assignment.split_id = new_split.id
+        assignment.current_position = 0
+    else:
+        assignment = UserSplitAssignment(
+            user_id=user_id,
+            split_id=new_split.id,
+            current_position=0
+        )
+        db.session.add(assignment)
+    
+    db.session.commit()
+    
+    return jsonify({
+        'id': new_split.id,
+        'name': new_split.name,
+        'message': 'Split copied and assigned successfully'
+    }), 201

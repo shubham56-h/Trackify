@@ -7,14 +7,16 @@ app = create_app()
 # Default exercises organized by muscle group and specific muscle
 DEFAULT_EXERCISES = {
     'chest': {
-        'upper_chest': ['Incline Barbell Press', 'Incline Dumbbell Press', 'Incline Dumbbell Fly'],
-        'middle_chest': ['Flat Barbell Bench Press', 'Flat Dumbbell Press', 'Cable Crossover', 'Push-ups'],
+        'upper_chest': ['Incline Barbell Press', 'Incline Dumbbell Press', 'Cable Fly'],
+        'middle_chest': ['Flat Barbell Bench Press', 'Flat Dumbbell Press', 'Pec-Dec Fly', 'Push-ups'],
         'lower_chest': ['Decline Barbell Press', 'Decline Dumbbell Press', 'Dips']
     },
     'back': {
-        'lats': ['Pull-ups', 'Lat Pulldown', 'Dumbbell Row', 'Barbell Row', 'T-Bar Row'],
+        'lats': ['Pull-ups', 'Lat Pulldown', 'Dumbbell Row', 'One Arm Half-Kneeling Lat'],
         'upper_back': ['Face Pulls', 'Reverse Fly', 'Seated Cable Row'],
-        'lower_back': ['Deadlift', 'Romanian Deadlift', 'Back Extensions', 'Good Mornings']
+        'lower_back': ['Deadlift', 'Romanian Deadlift', 'Back Extensions', 'Good Mornings'],
+        'traps': ['Barbell Shrugs', 'Dumbbell Shrugs', 'Farmer Walks', 'Rack Pulls'],
+        'rhomboids': ['Bent Over Row', 'T-Bar Row', 'Chest Supported Row', 'Inverted Row']
     },
     'shoulders': {
         'front_delt': ['Overhead Press', 'Front Raise', 'Arnold Press'],
@@ -22,18 +24,18 @@ DEFAULT_EXERCISES = {
         'rear_delt': ['Reverse Fly', 'Face Pulls', 'Bent Over Lateral Raise', 'Rear Delt Row']
     },
     'arms': {
-        'biceps': ['Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Preacher Curl', 'Cable Curl'],
+        'biceps': ['Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Preacher Curl', 'Cable Curl', 'Spider Curl'],
         'triceps': ['Close Grip Bench Press', 'Tricep Dips', 'Overhead Extension', 'Tricep Pushdown', 'Skull Crushers'],
         'forearms': ['Wrist Curl', 'Reverse Wrist Curl', 'Farmers Walk']
     },
     'legs': {
-        'quads': ['Squat', 'Front Squat', 'Leg Press', 'Leg Extension', 'Lunges'],
+        'quads': ['Squat', 'Smith Machine Squat', 'Leg Press', 'Leg Extension', 'Lunges'],
         'hamstrings': ['Romanian Deadlift', 'Leg Curl', 'Good Mornings', 'Nordic Curls'],
         'glutes': ['Hip Thrust', 'Bulgarian Split Squat', 'Glute Bridge', 'Cable Kickbacks'],
         'calves': ['Standing Calf Raise', 'Seated Calf Raise', 'Calf Press']
     },
     'core': {
-        'abs': ['Crunches', 'Hanging Leg Raise', 'Cable Crunch', 'Ab Wheel', 'Plank'],
+        'abs': ['Crunches', 'Leg Raise', 'Cable Crunch', 'Ab Wheel', 'Plank'],
         'obliques': ['Russian Twist', 'Side Plank', 'Woodchoppers', 'Bicycle Crunches']
     }
 }

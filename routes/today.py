@@ -47,7 +47,22 @@ def get_today():
         "active_session": {
             "id": active_session.id,
             "started_at": active_session.started_at.isoformat()
-        } if active_session else None
+        } if active_session else None,
+        "assignment": {
+            "id": assignment.id,
+            "current_position": assignment.current_position,
+            "split": {
+                "id": split.id,
+                "name": split.name,
+                "is_template": split.is_template,
+                "days": [{
+                    "id": day.id,
+                    "position": day.position,
+                    "name": day.name,
+                    "muscle_groups": day.muscle_groups
+                } for day in sorted(split.days, key=lambda d: d.position)]
+            }
+        }
     }), 200
 
 

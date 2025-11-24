@@ -1,7 +1,7 @@
 """add exercises table v2
 
 Revision ID: 4796174fb204
-Revises: c5564ede6499
+Revises: 0ca3fcfbe15f
 Create Date: 2025-11-22 13:37:58.889047
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '4796174fb204'
-down_revision = 'c5564ede6499'
+down_revision = '0ca3fcfbe15f'
 branch_labels = None
 depends_on = None
 

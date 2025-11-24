@@ -2,58 +2,131 @@
 
 {% block title %}Splits - Trackify{% endblock %}
 
-<!-- Updated: Using base.html navbar with logo and streak -->
-
 {% block content %}
-<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-    <h1 class="text-2xl sm:text-4xl font-bold mb-6 sm:mb-8">Workout Splits</h1>
-
-    <!-- Create Split Form -->
-    <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700 mb-6 sm:mb-8">
-        <h3 class="text-xl sm:text-2xl font-bold mb-4">Create New Split</h3>
-        <form id="createSplitForm">
-            <div class="mb-4">
-                <label class="block text-xs sm:text-sm font-medium mb-2">Split Name</label>
-                <input type="text" id="splitName" placeholder="e.g., Push Pull Legs" required
-                    class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition text-sm sm:text-base">
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-xs sm:text-sm font-medium mb-2">Days</label>
-                <div id="daysList" class="space-y-3 mb-3"></div>
-                <button type="button" onclick="addDay()" class="px-3 sm:px-4 py-2 bg-slate-700 rounded-lg hover:bg-slate-600 transition text-sm sm:text-base">
-                    + Add Day
-                </button>
-            </div>
-
-            <button type="submit" class="w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
-                Create Split
-            </button>
-        </form>
+<div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
+    <div class="mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-4xl font-bold mb-2">Workout Splits</h1>
+        <p class="text-sm sm:text-base text-slate-400">Create your own routine or choose from popular templates</p>
     </div>
 
-    <!-- Splits List -->
-    <h3 class="text-xl sm:text-2xl font-bold mb-4">Your Splits</h3>
-    <div id="splitsList" class="grid sm:grid-cols-2 gap-4 sm:gap-6"></div>
+    <!-- Section 1: Create Custom Split -->
+    <div class="mb-4 sm:mb-6" x-data="{ open: false }">
+        <button @click="open = !open" 
+            class="w-full bg-gradient-to-r from-primary/20 to-secondary/20 backdrop-blur-lg rounded-xl p-4 sm:p-5 border-2 border-primary/40 hover:border-primary/60 transition flex items-center justify-between group">
+            <div class="flex items-center gap-3">
+                <span class="text-xl sm:text-2xl">➕</span>
+                <div class="text-left">
+                    <h2 class="text-base sm:text-xl font-bold">Create Custom Split</h2>
+                    <p class="text-xs sm:text-sm text-slate-400">Design your own private routine</p>
+                </div>
+            </div>
+            <svg class="w-5 h-5 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        
+        <div x-show="open" 
+             x-collapse
+             class="mt-3 sm:mt-4 bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+            <div class="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p class="text-xs sm:text-sm text-blue-300">
+                    <span class="font-semibold">Note:</span> Custom splits are private and only visible to you.
+                </p>
+            </div>
+            <form id="createSplitForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2 text-slate-300">Split Name</label>
+                    <input type="text" id="splitName" placeholder="e.g., My Custom Split" required
+                        class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-white placeholder-slate-500 text-sm sm:text-base">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2 text-slate-300">Days</label>
+                    <div id="daysList" class="space-y-2 sm:space-y-3 mb-3"></div>
+                    <button type="button" onclick="addDay()" 
+                        class="w-full sm:w-auto px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition text-sm font-medium">
+                        + Add Day
+                    </button>
+                </div>
+
+                <button type="submit" 
+                    class="w-full px-6 py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                    Create Split
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 2: Popular Templates -->
+    <div class="mb-4 sm:mb-6" x-data="{ open: false }">
+        <button @click="open = !open" 
+            class="w-full bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-5 border border-slate-700 hover:border-secondary/60 transition flex items-center justify-between group">
+            <div class="flex items-center gap-3">
+                <span class="text-xl sm:text-2xl">📋</span>
+                <div class="text-left">
+                    <h2 class="text-base sm:text-xl font-bold">Use Popular Splits</h2>
+                    <p class="text-xs sm:text-sm text-slate-400">Pre-made workout templates</p>
+                </div>
+            </div>
+            <svg class="w-5 h-5 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        
+        <div x-show="open" 
+             x-collapse
+             class="mt-3 sm:mt-4 space-y-3 sm:space-y-4" id="templatesList">
+            <p class="text-slate-400 text-center py-8 bg-slate-800/50 rounded-xl text-sm">Loading templates...</p>
+        </div>
+    </div>
+
+    <!-- Section 3: Your Active Split -->
+    <div class="mb-4 sm:mb-6" x-data="{ open: true }">
+        <button @click="open = !open" 
+            class="w-full bg-gradient-to-r from-secondary/20 to-primary/20 backdrop-blur-lg rounded-xl p-4 sm:p-5 border-2 border-secondary/40 hover:border-secondary/60 transition flex items-center justify-between group">
+            <div class="flex items-center gap-3">
+                <span class="text-xl sm:text-2xl">⭐</span>
+                <div class="text-left">
+                    <h2 class="text-base sm:text-xl font-bold">Your Active Split</h2>
+                    <p class="text-xs sm:text-sm text-slate-400">Currently in use</p>
+                </div>
+            </div>
+            <svg class="w-5 h-5 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        
+        <div x-show="open" 
+             x-collapse
+             class="mt-3 sm:mt-4 bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
+            <div id="activeSplitContent">
+                <p class="text-slate-400 text-center py-8 text-sm">No active split assigned</p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
     let dayCount = 0;
+    let currentAssignment = null;
 
     function addDay() {
         const daysList = document.getElementById('daysList');
         const dayDiv = document.createElement('div');
-        dayDiv.className = 'flex flex-col sm:flex-row gap-2 sm:gap-3';
+        dayDiv.className = 'bg-slate-900/50 rounded-lg p-3 border border-slate-700';
         dayDiv.innerHTML = `
-            <input type="text" placeholder="Day name (e.g., Push)" required
-                class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition day-name text-sm sm:text-base">
-            <input type="text" placeholder="Muscle groups"
-                class="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition day-muscles text-sm sm:text-base">
-            <button type="button" onclick="this.parentElement.remove()" class="px-3 sm:px-4 py-2 sm:py-3 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition text-sm sm:text-base">
-                ✕
-            </button>
+            <div class="flex flex-col gap-2">
+                <input type="text" placeholder="Day name (e.g., Push)" required
+                    class="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition day-name text-white placeholder-slate-500 text-sm sm:text-base">
+                <input type="text" placeholder="Muscle groups (e.g., Chest, Shoulders, Triceps)"
+                    class="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition day-muscles text-white placeholder-slate-500 text-sm sm:text-base">
+                <button type="button" onclick="this.parentElement.parentElement.remove()" 
+                    class="w-full sm:w-auto px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition font-medium text-sm">
+                    Remove Day
+                </button>
+            </div>
         `;
         daysList.appendChild(dayDiv);
         dayCount++;
@@ -62,7 +135,7 @@
     document.getElementById('createSplitForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const name = document.getElementById('splitName').value;
+        const name = document.getElementById('splitName').value.trim();
         const dayElements = document.querySelectorAll('#daysList > div');
         
         if (dayElements.length === 0) {
@@ -71,13 +144,13 @@
         }
         
         const days = Array.from(dayElements).map(el => ({
-            name: el.querySelector('.day-name').value,
-            muscle_groups: el.querySelector('.day-muscles').value
+            name: el.querySelector('.day-name').value.trim(),
+            muscle_groups: el.querySelector('.day-muscles').value.trim()
         }));
         
         try {
             await apiCall('/splits', 'POST', { name, days });
-            showToast('Split created successfully!', 'success');
+            showToast('Split created and assigned!', 'success');
             document.getElementById('splitName').value = '';
             document.getElementById('daysList').innerHTML = '';
             dayCount = 0;
@@ -90,41 +163,121 @@
     async function loadSplits() {
         try {
             const data = await apiCall('/splits');
-            const splitsList = document.getElementById('splitsList');
             
-            if (data.splits.length === 0) {
-                splitsList.innerHTML = '<p class="text-slate-400 col-span-2 text-center py-8">No splits created yet</p>';
-                return;
-            }
+            // Get current assignment
+            const todayData = await apiCall('/today');
+            currentAssignment = todayData.assignment;
             
-            splitsList.innerHTML = data.splits.map(split => `
-                <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 border border-slate-700">
-                    <h4 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">${split.name}</h4>
-                    <div class="space-y-2 mb-3 sm:mb-4">
-                        ${split.days.map(day => `
-                            <div class="bg-slate-900 rounded-lg p-2 sm:p-3">
-                                <p class="font-semibold text-sm sm:text-base">${day.name}</p>
-                                <p class="text-xs sm:text-sm text-slate-400">${day.muscle_groups || 'No muscle groups specified'}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button onclick="assignSplit(${split.id})" class="w-full px-4 py-2 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
-                        Use This Split
-                    </button>
-                </div>
-            `).join('');
+            // Separate templates and user splits
+            const templates = data.splits.filter(s => s.is_template);
+            const userSplits = data.splits.filter(s => !s.is_template);
+            
+            // Render active split
+            renderActiveSplit(currentAssignment, data.splits);
+            
+            // Render templates
+            renderTemplates(templates);
+            
         } catch (error) {
             console.error('Failed to load splits:', error);
         }
     }
 
-    async function assignSplit(splitId) {
+    function renderActiveSplit(assignment, allSplits) {
+        const container = document.getElementById('activeSplitContent');
+        
+        if (!assignment || !assignment.split) {
+            container.innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-sm sm:text-base text-slate-400 mb-3">No active split assigned</p>
+                    <p class="text-xs sm:text-sm text-slate-500">Create a custom split or choose a template above</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const split = assignment.split;
+        const currentDay = split.days[assignment.current_position];
+        
+        container.innerHTML = `
+            <div class="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg p-3 sm:p-5 border border-primary/30">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                    <h3 class="text-lg sm:text-2xl font-bold">${split.name}</h3>
+                    <span class="text-xs bg-primary/20 text-primary px-3 py-1 rounded-full border border-primary/30 w-fit">ACTIVE</span>
+                </div>
+                <div class="bg-slate-900/50 rounded-lg p-3 sm:p-4 mb-4 border-l-4 border-secondary">
+                    <p class="text-xs sm:text-sm text-slate-400 mb-1">Current Day:</p>
+                    <p class="text-base sm:text-lg font-bold">${currentDay.name}</p>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">${currentDay.muscle_groups || 'No muscle groups'}</p>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs sm:text-sm text-slate-400 font-semibold mb-2">All Days in Split:</p>
+                    <div class="space-y-2">
+                        ${split.days.map((day, idx) => `
+                            <div class="flex items-center gap-2 sm:gap-3 bg-slate-900/30 rounded-lg p-2 sm:p-3 ${idx === assignment.current_position ? 'border-l-2 sm:border-l-4 border-secondary' : ''}">
+                                <span class="text-xs sm:text-sm font-bold ${idx === assignment.current_position ? 'text-secondary' : 'text-slate-500'} min-w-[20px]">${idx + 1}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs sm:text-sm font-semibold ${idx === assignment.current_position ? 'text-white' : 'text-slate-300'} truncate">${day.name}</p>
+                                    <p class="text-xs text-slate-500 truncate">${day.muscle_groups || 'No muscle groups'}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTemplates(templates) {
+        const container = document.getElementById('templatesList');
+        
+        if (templates.length === 0) {
+            container.innerHTML = `
+                <div class="bg-slate-800/50 rounded-xl p-6 text-center">
+                    <p class="text-sm text-slate-400">No templates available</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = templates.map(split => `
+            <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl p-4 sm:p-5 border border-slate-700 hover:border-secondary/50 transition">
+                <div class="mb-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs bg-secondary/20 text-secondary px-2 py-1 rounded-full border border-secondary/30 font-semibold">TEMPLATE</span>
+                        <span class="text-xs text-slate-500">${split.days.length} days</span>
+                    </div>
+                    <h4 class="text-base sm:text-xl font-bold">${split.name}</h4>
+                </div>
+                <div class="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                    ${split.days.map((day, idx) => `
+                        <div class="bg-slate-900/50 rounded-lg p-2 sm:p-3 flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500 min-w-[20px]">${idx + 1}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-xs sm:text-sm truncate">${day.name}</p>
+                                <p class="text-xs text-slate-400 truncate">${day.muscle_groups || 'No muscle groups'}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="copyTemplate(${split.id})" 
+                    class="w-full px-4 py-2.5 sm:py-3 bg-gradient-to-r from-secondary to-primary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
+                    Use This Template
+                </button>
+            </div>
+        `).join('');
+    }
+
+    async function copyTemplate(splitId) {
         try {
-            await apiCall('/splits/assign', 'POST', { split_id: splitId });
-            showToast('Split assigned successfully!', 'success');
-            setTimeout(() => window.location.href = '/dashboard', 1000);
+            await apiCall(`/splits/copy/${splitId}`, 'POST');
+            showToast('Template copied and assigned!', 'success');
+            setTimeout(() => {
+                loadSplits();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 1000);
         } catch (error) {
-            showToast('Failed to assign split', 'error');
+            showToast('Failed to copy template', 'error');
         }
     }
 

@@ -381,3 +381,80 @@ def get_session_summary():
             "volume": total_volume
         }
     }), 200
+
+
+@today_bp.route("/last-workout", methods=["GET"])
+@jwt_required()
+def get_last_workout():
+    """Get details of the last completed workout"""
+    user_id = int(get_jwt_identity())
+    
+    # Get last completed session
+    last_session = WorkoutSession.query.filter_by(
+        user_id=user_id,
+        completed=True
+    ).order_by(WorkoutSession.ended_at.desc()).first()
+    
+    if not last_session:
+        return jsonify({"message": "No completed workouts found"}), 404
+    
+    # Get all sets in this session
+    sets = WorkoutSet.query.filter_by(session_id=last_session.id).all()
+    
+    # Group sets by exercise
+    exercises_summary = {}
+    for workout_set in sets:
+        exercise_key = workout_set.exercise_id or workout_set.exercise_name
+        exercise_name = workout_set.exercise_name
+        
+        if exercise_key not in exercises_summary:
+            exercises_summary[exercise_key] = {
+                'name': exercise_name,
+                'sets': [],
+                'total_sets': 0,
+                'total_volume': 0,
+                'max_weight': 0
+            }
+        
+        exercises_summary[exercise_key]['sets'].append({
+            'set_number': workout_set.set_number,
+            'reps': workout_set.reps,
+            'weight': workout_set.weight
+        })
+        exercises_summary[exercise_key]['total_sets'] += 1
+        exercises_summary[exercise_key]['total_volume'] += workout_set.reps * workout_set.weight
+        exercises_summary[exercise_key]['max_weight'] = max(
+            exercises_summary[exercise_key]['max_weight'],
+            workout_set.weight
+        )
+    
+    # Calculate totals
+    total_sets = len(sets)
+    total_volume = sum(s.reps * s.weight for s in sets)
+    total_exercises = len(exercises_summary)
+    
+    # Calculate duration
+    duration_minutes = 0
+    if last_session.started_at and last_session.ended_at:
+        duration = last_session.ended_at - last_session.started_at
+        duration_minutes = int(duration.total_seconds() / 60)
+    
+    # Get split day name
+    split_day_name = "Unknown"
+    if last_session.split_day:
+        split_day_name = last_session.split_day.name
+    
+    return jsonify({
+        "session_id": last_session.id,
+        "date": last_session.ended_at.strftime("%b %d, %Y") if last_session.ended_at else "Unknown",
+        "day_name": split_day_name,
+        "started_at": last_session.started_at.isoformat() if last_session.started_at else None,
+        "ended_at": last_session.ended_at.isoformat() if last_session.ended_at else None,
+        "duration_minutes": duration_minutes,
+        "exercises": list(exercises_summary.values()),
+        "totals": {
+            "exercises": total_exercises,
+            "sets": total_sets,
+            "volume": total_volume
+        }
+    }), 200

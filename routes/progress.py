@@ -169,3 +169,85 @@ def stats():
         "longest_streak": longest_streak,
         "workout_dates": workout_dates
     }), 200
+
+
+
+@progress_bp.route("/workout-history", methods=["GET"])
+@jwt_required()
+def workout_history():
+    """Get detailed history of all completed workouts with set-wise breakdown"""
+    user_id = int(get_jwt_identity())
+    
+    # Get all completed sessions
+    sessions = WorkoutSession.query.filter_by(
+        user_id=user_id,
+        completed=True
+    ).order_by(WorkoutSession.ended_at.desc()).all()
+    
+    workouts = []
+    for session in sessions:
+        # Get all sets in this session, ordered by exercise and set number
+        sets = WorkoutSet.query.filter_by(session_id=session.id).order_by(
+            WorkoutSet.exercise_name, WorkoutSet.set_number
+        ).all()
+        
+        # Group sets by exercise with detailed breakdown
+        exercises_summary = {}
+        for workout_set in sets:
+            exercise_key = workout_set.exercise_id or workout_set.exercise_name
+            exercise_name = workout_set.exercise_name
+            
+            if exercise_key not in exercises_summary:
+                exercises_summary[exercise_key] = {
+                    'name': exercise_name,
+                    'sets': [],
+                    'total_sets': 0,
+                    'total_volume': 0,
+                    'max_weight': 0
+                }
+            
+            # Add individual set details
+            exercises_summary[exercise_key]['sets'].append({
+                'set_number': workout_set.set_number,
+                'reps': workout_set.reps,
+                'weight': workout_set.weight,
+                'volume': workout_set.reps * workout_set.weight
+            })
+            
+            exercises_summary[exercise_key]['total_sets'] += 1
+            exercises_summary[exercise_key]['total_volume'] += workout_set.reps * workout_set.weight
+            exercises_summary[exercise_key]['max_weight'] = max(
+                exercises_summary[exercise_key]['max_weight'],
+                workout_set.weight
+            )
+        
+        # Calculate totals
+        total_sets = len(sets)
+        total_volume = sum(s.reps * s.weight for s in sets)
+        total_exercises = len(exercises_summary)
+        
+        # Calculate duration
+        duration_minutes = 0
+        if session.started_at and session.ended_at:
+            duration = session.ended_at - session.started_at
+            duration_minutes = int(duration.total_seconds() / 60)
+        
+        # Get split day name
+        split_day_name = "Workout"
+        if session.split_day:
+            split_day_name = session.split_day.name
+        
+        workouts.append({
+            "session_id": session.id,
+            "date": session.ended_at.strftime("%b %d, %Y") if session.ended_at else "Unknown",
+            "day_name": split_day_name,
+            "duration_minutes": duration_minutes,
+            "exercises": list(exercises_summary.values()),
+            "totals": {
+                "exercises": total_exercises,
+                "sets": total_sets,
+                "volume": total_volume
+            }
+        })
+    
+    return jsonify({"workouts": workouts}), 200

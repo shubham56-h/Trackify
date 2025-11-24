@@ -23,10 +23,18 @@ DEFAULT_EXERCISES = {
         'side_delt': ['Lateral Raise', 'Dumbbell Lateral Raise', 'Cable Lateral Raise', 'Upright Row'],
         'rear_delt': ['Reverse Fly', 'Face Pulls', 'Bent Over Lateral Raise', 'Rear Delt Row']
     },
-    'arms': {
-        'biceps': ['Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Preacher Curl', 'Cable Curl', 'Spider Curl'],
-        'triceps': ['Close Grip Bench Press', 'Tricep Dips', 'Overhead Extension', 'Tricep Pushdown', 'Skull Crushers'],
-        'forearms': ['Wrist Curl', 'Reverse Wrist Curl', 'Farmers Walk']
+    'biceps': {
+        'short_head': ['Preacher Curl', 'Spider Curl', 'Concentration Curl'],
+        'long_head': ['Incline Dumbbell Curl', 'Drag Curl', 'Bayesian Curl'],
+        'brachialis': ['Hammer Curl', 'Reverse Curl', 'Cross Body Hammer Curl']
+    },
+    'triceps': {
+        'long_head': ['Overhead Extension', 'Skull Crushers', 'French Press'],
+        'lateral_head': ['Tricep Pushdown', 'Close Grip Bench Press', 'Diamond Push-ups'],
+        'medial_head': ['Reverse Grip Pushdown', 'Tricep Dips', 'Kickbacks']
+    },
+    'forearms': {
+        'forearms': ['Wrist Curl', 'Reverse Wrist Curl', 'Farmers Walk', 'Wrist Roller', 'Reverse Barbell Curl']
     },
     'legs': {
         'quads': ['Squat', 'Smith Machine Squat', 'Leg Press', 'Leg Extension', 'Lunges'],

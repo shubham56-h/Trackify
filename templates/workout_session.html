@@ -108,14 +108,7 @@
 
     function selectMuscleGroup(muscleGroup) {
         localStorage.setItem('selectedMuscleGroup', muscleGroup);
-        
-        // For forearms, skip muscle selection and go directly to exercise list
-        if (muscleGroup === 'forearms') {
-            localStorage.setItem('selectedSpecificMuscle', 'forearms');
-            window.location.href = '/exercise-list';
-        } else {
-            window.location.href = '/muscle-selection';
-        }
+        window.location.href = '/muscle-selection';
     }
 
     async function finishWorkout() {

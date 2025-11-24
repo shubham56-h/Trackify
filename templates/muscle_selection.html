@@ -43,17 +43,17 @@
             { id: 'rear_delt', name: 'Rear Delts', desc: 'Posterior deltoid' }
         ],
         'biceps': [
-            { id: 'biceps_short_head', name: 'Short Head', desc: 'Inner bicep' },
-            { id: 'biceps_long_head', name: 'Long Head', desc: 'Outer bicep' },
+            { id: 'short_head', name: 'Short Head', desc: 'Inner bicep' },
+            { id: 'long_head', name: 'Long Head', desc: 'Outer bicep' },
             { id: 'brachialis', name: 'Brachialis', desc: 'Under bicep' }
         ],
         'triceps': [
-            { id: 'triceps_long_head', name: 'Long Head', desc: 'Inner tricep' },
-            { id: 'triceps_lateral_head', name: 'Lateral Head', desc: 'Outer tricep' },
-            { id: 'triceps_medial_head', name: 'Medial Head', desc: 'Lower tricep' }
+            { id: 'long_head', name: 'Long Head', desc: 'Inner tricep' },
+            { id: 'lateral_head', name: 'Lateral Head', desc: 'Outer tricep' },
+            { id: 'medial_head', name: 'Medial Head', desc: 'Lower tricep' }
         ],
         'forearms': [
-            { id: 'forearms', name: 'Forearms', desc: 'All forearm exercises', direct: true }
+            { id: 'forearms', name: 'All Forearms', desc: 'All forearm exercises', direct: true }
         ],
         'legs': [
             { id: 'quads', name: 'Quadriceps', desc: 'Front thigh' },
@@ -91,13 +91,8 @@
     }
 
     function selectSpecificMuscle(specificMuscle) {
-        if (muscleGroup === 'forearms') {
-            localStorage.setItem('selectedSpecificMuscle', 'forearms');
-            window.location.href = '/exercise-list';
-        } else {
-            localStorage.setItem('selectedSpecificMuscle', specificMuscle);
-            window.location.href = '/exercise-list';
-        }
+        localStorage.setItem('selectedSpecificMuscle', specificMuscle);
+        window.location.href = '/exercise-list';
     }
 
     function goBack() {

@@ -47,23 +47,73 @@
                 Last time: <span class="text-primary font-semibold" id="lastSetData"></span>
             </div>
         </div>
-        <form id="addSetForm" class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-            <div>
-                <label class="block text-xs sm:text-sm font-medium mb-2">Reps</label>
-                <input type="number" id="reps" min="1" value="10" required
-                    class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition text-sm sm:text-base text-center font-bold text-lg">
+        <form id="addSetForm" class="space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Reps Picker -->
+                <div>
+                    <label class="block text-sm font-medium mb-3 text-center text-primary">Reps</label>
+                    <div class="relative h-40 bg-slate-900 rounded-xl overflow-hidden border-2 border-primary/30">
+                        <!-- Selection indicator -->
+                        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 bg-primary/20 border-y-2 border-primary pointer-events-none z-10"></div>
+                        
+                        <!-- Scrollable list -->
+                        <div id="repsPicker" class="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide" style="scroll-snap-type: y mandatory;">
+                            <!-- Will be populated by JS -->
+                        </div>
+                    </div>
+                    <input type="hidden" id="reps" value="10" required>
+                </div>
+
+                <!-- Weight Picker -->
+                <div>
+                    <label class="block text-sm font-medium mb-3 text-center text-secondary">Weight (kg)</label>
+                    <div class="relative h-40 bg-slate-900 rounded-xl overflow-hidden border-2 border-secondary/30">
+                        <!-- Selection indicator -->
+                        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 bg-secondary/20 border-y-2 border-secondary pointer-events-none z-10"></div>
+                        
+                        <!-- Scrollable list -->
+                        <div id="weightPicker" class="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide" style="scroll-snap-type: y mandatory;">
+                            <!-- Will be populated by JS -->
+                        </div>
+                    </div>
+                    <input type="hidden" id="weight" value="5" required>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs sm:text-sm font-medium mb-2">Weight (kg)</label>
-                <input type="number" id="weight" step="2.5" min="0" value="5" required
-                    class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-primary transition text-sm sm:text-base text-center font-bold text-lg">
-            </div>
-            <div class="col-span-2 md:col-span-1 flex items-end">
-                <button type="submit" class="w-full px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold hover:opacity-90 transition text-sm sm:text-base">
-                    Add Set
-                </button>
-            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-4 bg-gradient-to-r from-primary to-secondary rounded-xl font-bold text-lg hover:opacity-90 transition transform active:scale-95 shadow-lg">
+                Add Set
+            </button>
         </form>
+        
+        <style>
+            /* Hide scrollbar but keep functionality */
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            
+            /* Picker item styling */
+            .picker-item {
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #64748b;
+                transition: all 0.2s;
+                scroll-snap-align: center;
+            }
+            
+            .picker-item.selected {
+                font-size: 2rem;
+                color: white;
+            }
+        </style>
     </div>
 
     <!-- Sets List -->
@@ -110,31 +160,104 @@
 
     document.getElementById('exerciseName').textContent = currentExercise.name;
 
-    // Add scroll wheel functionality for number inputs
-    function setupScrollableInputs() {
+    // Initialize scrollable pickers
+    function initializePickers() {
+        // Reps picker (1-50)
+        const repsPicker = document.getElementById('repsPicker');
         const repsInput = document.getElementById('reps');
+        
+        // Add padding items at top and bottom
+        repsPicker.innerHTML = '<div class="picker-item" style="opacity: 0;">0</div><div class="picker-item" style="opacity: 0;">0</div>';
+        
+        for (let i = 1; i <= 50; i++) {
+            const item = document.createElement('div');
+            item.className = 'picker-item';
+            item.textContent = i;
+            item.dataset.value = i;
+            if (i === 10) item.classList.add('selected');
+            repsPicker.appendChild(item);
+        }
+        
+        repsPicker.innerHTML += '<div class="picker-item" style="opacity: 0;">0</div><div class="picker-item" style="opacity: 0;">0</div>';
+        
+        // Weight picker (0-200kg in 2.5kg increments)
+        const weightPicker = document.getElementById('weightPicker');
         const weightInput = document.getElementById('weight');
         
-        repsInput.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const currentValue = parseInt(repsInput.value) || 10;
-            if (e.deltaY < 0) {
-                repsInput.value = currentValue + 1;
-            } else if (currentValue > 1) {
-                repsInput.value = currentValue - 1;
+        weightPicker.innerHTML = '<div class="picker-item" style="opacity: 0;">0</div><div class="picker-item" style="opacity: 0;">0</div>';
+        
+        for (let i = 0; i <= 200; i += 2.5) {
+            const item = document.createElement('div');
+            item.className = 'picker-item';
+            item.textContent = i.toFixed(1);
+            item.dataset.value = i.toFixed(1);
+            if (i === 5) item.classList.add('selected');
+            weightPicker.appendChild(item);
+        }
+        
+        weightPicker.innerHTML += '<div class="picker-item" style="opacity: 0;">0</div><div class="picker-item" style="opacity: 0;">0</div>';
+        
+        // Scroll to initial values
+        setTimeout(() => {
+            scrollToValue(repsPicker, 10);
+            scrollToValue(weightPicker, 5);
+        }, 100);
+        
+        // Handle scroll events
+        let repsScrollTimeout;
+        repsPicker.addEventListener('scroll', () => {
+            clearTimeout(repsScrollTimeout);
+            repsScrollTimeout = setTimeout(() => {
+                updateSelection(repsPicker, repsInput);
+            }, 100);
+        });
+        
+        let weightScrollTimeout;
+        weightPicker.addEventListener('scroll', () => {
+            clearTimeout(weightScrollTimeout);
+            weightScrollTimeout = setTimeout(() => {
+                updateSelection(weightPicker, weightInput);
+            }, 100);
+        });
+    }
+    
+    function scrollToValue(picker, value) {
+        const items = picker.querySelectorAll('.picker-item[data-value]');
+        for (let item of items) {
+            if (parseFloat(item.dataset.value) === value) {
+                item.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                break;
+            }
+        }
+    }
+    
+    function updateSelection(picker, input) {
+        const pickerRect = picker.getBoundingClientRect();
+        const centerY = pickerRect.top + pickerRect.height / 2;
+        
+        let closestItem = null;
+        let closestDistance = Infinity;
+        
+        const items = picker.querySelectorAll('.picker-item[data-value]');
+        items.forEach(item => {
+            item.classList.remove('selected');
+            const itemRect = item.getBoundingClientRect();
+            const itemCenterY = itemRect.top + itemRect.height / 2;
+            const distance = Math.abs(centerY - itemCenterY);
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestItem = item;
             }
         });
         
-        weightInput.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const currentValue = parseFloat(weightInput.value) || 5;
-            const step = 2.5;
-            if (e.deltaY < 0) {
-                weightInput.value = (currentValue + step).toFixed(1);
-            } else if (currentValue > 0) {
-                weightInput.value = Math.max(0, currentValue - step).toFixed(1);
-            }
-        });
+        if (closestItem) {
+            closestItem.classList.add('selected');
+            input.value = closestItem.dataset.value;
+            
+            // Snap to center
+            closestItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
     }
 
     function timeAgo(timestamp) {
@@ -500,7 +623,7 @@
     }
 
     async function init() {
-        setupScrollableInputs();
+        initializePickers();
         await loadCurrentSessionSets();
         await loadExerciseHistory();
         renderSets();

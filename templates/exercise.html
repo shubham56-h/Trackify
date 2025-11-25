@@ -409,17 +409,33 @@
         if (!confirmed) return;
         
         try {
+            // Delete from database
+            const response = await fetch(`${API_BASE}/today/delete-set/${set.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to delete set');
+            }
+            
             // Remove from local array
             sets.splice(index, 1);
+            
+            // Renumber sets
+            sets.forEach((s, i) => {
+                s.set_number = i + 1;
+            });
             
             // Re-render
             renderSets();
             updateSetHint();
             
-            showToast('Set deleted', 'success');
+            showToast('Set deleted! 🗑️', 'success');
             
-            // Note: Set is already in database, but will be excluded from final report
-            // since we're tracking sets in the local array
         } catch (error) {
             showToast('Failed to delete set: ' + error.message, 'error');
         }

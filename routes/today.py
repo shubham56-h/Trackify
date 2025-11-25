@@ -185,6 +185,56 @@ def add_set():
     }), 201
 
 
+@today_bp.route("/delete-set/<int:set_id>", methods=["DELETE"])
+@jwt_required()
+def delete_set(set_id):
+    """Delete a workout set"""
+    user_id = int(get_jwt_identity())
+    
+    # Get the set
+    workout_set = WorkoutSet.query.get(set_id)
+    
+    if not workout_set:
+        return jsonify({"message": "Set not found"}), 404
+    
+    # Get the session to verify ownership
+    session = WorkoutSession.query.get(workout_set.session_id)
+    
+    if not session or session.user_id != user_id:
+        return jsonify({"message": "Unauthorized"}), 403
+    
+    if session.completed:
+        return jsonify({"message": "Cannot delete sets from completed workout"}), 400
+    
+    # Store exercise info for renumbering
+    exercise_id = workout_set.exercise_id
+    exercise_name = workout_set.exercise_name
+    deleted_set_number = workout_set.set_number
+    
+    # Delete the set
+    db.session.delete(workout_set)
+    db.session.commit()
+    
+    # Renumber remaining sets for this exercise
+    if exercise_id:
+        remaining_sets = WorkoutSet.query.filter_by(
+            session_id=session.id,
+            exercise_id=exercise_id
+        ).filter(WorkoutSet.set_number > deleted_set_number).order_by(WorkoutSet.set_number).all()
+    else:
+        remaining_sets = WorkoutSet.query.filter_by(
+            session_id=session.id,
+            exercise_name=exercise_name
+        ).filter(WorkoutSet.set_number > deleted_set_number).order_by(WorkoutSet.set_number).all()
+    
+    for workout_set in remaining_sets:
+        workout_set.set_number -= 1
+    
+    db.session.commit()
+    
+    return jsonify({"message": "Set deleted successfully"}), 200
+
+
 @today_bp.route("/finish", methods=["POST"])
 @jwt_required()
 def finish_workout():

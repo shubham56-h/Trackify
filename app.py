@@ -9,6 +9,7 @@ from routes.today import today_bp
 from routes.progress import progress_bp
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
+from datetime import timedelta
 
 load_dotenv()
 
@@ -19,7 +20,8 @@ def create_app():
         'SQLALCHEMY_DATABASE_URI': os.getenv('DATABASE_URL'),
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         'SECRET_KEY': os.getenv('SECRET_KEY') or 'dev',
-        'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY') or 'jwt-dev'
+        'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY') or 'jwt-dev',
+        'JWT_ACCESS_TOKEN_EXPIRES': timedelta(days=7)  # Token expires in 7 days
     })
 
     db.init_app(app)

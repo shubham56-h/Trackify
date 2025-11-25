@@ -175,7 +175,31 @@
         const API_BASE = '/api';
         const authToken = localStorage.getItem('authToken');
 
-        if (!authToken) {
+        // Check if token exists and is valid
+        function isTokenValid() {
+            if (!authToken) return false;
+            
+            try {
+                // Decode JWT token
+                const payload = JSON.parse(atob(authToken.split('.')[1]));
+                const exp = payload.exp;
+                
+                // Check if token is expired
+                if (exp && Date.now() >= exp * 1000) {
+                    console.log('Token expired');
+                    return false;
+                }
+                
+                return true;
+            } catch (e) {
+                console.log('Invalid token format');
+                return false;
+            }
+        }
+
+        // Redirect to login if no valid token
+        if (!isTokenValid()) {
+            localStorage.removeItem('authToken');
             window.location.href = '/login';
         }
 

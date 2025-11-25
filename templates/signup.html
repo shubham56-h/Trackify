@@ -23,6 +23,26 @@
         animation: slideIn 0.5s ease-out;
     }
 </style>
+<script>
+    // Check if user is already logged in
+    const authToken = localStorage.getItem('authToken');
+    
+    if (authToken) {
+        try {
+            const payload = JSON.parse(atob(authToken.split('.')[1]));
+            const exp = payload.exp;
+            
+            if (exp && Date.now() < exp * 1000) {
+                // Already logged in, redirect to dashboard
+                window.location.href = '/dashboard';
+            } else {
+                localStorage.removeItem('authToken');
+            }
+        } catch (e) {
+            localStorage.removeItem('authToken');
+        }
+    }
+</script>
 {% endblock %}
 
 {% block content %}

@@ -2,6 +2,33 @@
 
 {% block title %}Trackify - Track Your Fitness Journey{% endblock %}
 
+{% block extra_head %}
+<script>
+    // Check if user is already logged in
+    const authToken = localStorage.getItem('authToken');
+    
+    if (authToken) {
+        try {
+            // Decode JWT token to check if valid
+            const payload = JSON.parse(atob(authToken.split('.')[1]));
+            const exp = payload.exp;
+            
+            // Check if token is not expired
+            if (exp && Date.now() < exp * 1000) {
+                // Token is valid, redirect to dashboard
+                window.location.href = '/dashboard';
+            } else {
+                // Token expired, remove it
+                localStorage.removeItem('authToken');
+            }
+        } catch (e) {
+            // Invalid token, remove it
+            localStorage.removeItem('authToken');
+        }
+    }
+</script>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <div class="container mx-auto px-4 sm:px-6 py-12 sm:py-20">

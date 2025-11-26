@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_compress import Compress
 from models import db
 from routes.auth import auth_bp
 from routes.splits import splits_bp
@@ -21,13 +22,17 @@ def create_app():
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         'SECRET_KEY': os.getenv('SECRET_KEY') or 'dev',
         'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY') or 'jwt-dev',
-        'JWT_ACCESS_TOKEN_EXPIRES': timedelta(days=7)  # Token expires in 7 days
+        'JWT_ACCESS_TOKEN_EXPIRES': timedelta(days=7),  # Token expires in 7 days
+        'COMPRESS_MIMETYPES': ['text/html', 'text/css', 'text/xml', 'application/json', 'application/javascript'],
+        'COMPRESS_LEVEL': 6,
+        'COMPRESS_MIN_SIZE': 500
     })
 
     db.init_app(app)
     Migrate(app, db)
     JWTManager(app)
     CORS(app)
+    Compress(app)  # Enable Gzip compression
 
     # register blueprints
     app.register_blueprint(auth_bp)

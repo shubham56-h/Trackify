@@ -20,6 +20,11 @@ def create_app():
     app.config.from_mapping({
         'SQLALCHEMY_DATABASE_URI': os.getenv('DATABASE_URL'),
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'SQLALCHEMY_ENGINE_OPTIONS': {
+            'pool_size': 10,           # Keep 10 connections ready
+            'pool_recycle': 3600,      # Recycle connections after 1 hour
+            'pool_pre_ping': True,     # Check connection health before using
+        },
         'SECRET_KEY': os.getenv('SECRET_KEY') or 'dev',
         'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY') or 'jwt-dev',
         'JWT_ACCESS_TOKEN_EXPIRES': timedelta(days=7),  # Token expires in 7 days

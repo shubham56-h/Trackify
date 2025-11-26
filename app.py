@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_compress import Compress
@@ -38,6 +38,19 @@ def create_app():
     JWTManager(app)
     CORS(app)
     Compress(app)  # Enable Gzip compression
+
+    # Add caching headers for better Vercel performance
+    @app.after_request
+    def add_cache_headers(response):
+        # Cache static assets for 1 year
+        if request.path.startswith('/static'):
+            response.cache_control.max_age = 31536000
+            response.cache_control.public = True
+        # Cache HTML pages for 5 minutes
+        elif request.method == 'GET' and not request.path.startswith('/api'):
+            response.cache_control.max_age = 300
+            response.cache_control.public = True
+        return response
 
     # register blueprints
     app.register_blueprint(auth_bp)

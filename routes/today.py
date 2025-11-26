@@ -12,13 +12,7 @@ def get_today():
     """Step 3: Today screen - Shows today's workout"""
     user_id = int(get_jwt_identity())
     
-    # Optimized query with eager loading - loads split and days in one query
-    from sqlalchemy.orm import joinedload
-    
-    assignment = UserSplitAssignment.query.options(
-        joinedload(UserSplitAssignment.split).joinedload('days')
-    ).filter_by(user_id=user_id).first()
-    
+    assignment = UserSplitAssignment.query.filter_by(user_id=user_id).first()
     if not assignment:
         return jsonify({"message": "No split assigned. Create a split first."}), 404
     
